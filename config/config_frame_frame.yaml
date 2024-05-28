@@ -1,7 +1,7 @@
 # pre process
 # ds_size: 0.2 // hasta ahora el mejor
 ds_size: 0.2
-maximum_corner_num: 50
+maximum_corner_num: 10
 
 # # Original key points
 # plane_detection_thre: 0.01

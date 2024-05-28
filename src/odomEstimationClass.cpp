@@ -23,7 +23,6 @@ struct EdgeCostFunction {
     template <typename T>
     bool operator()(const T* const parameters, T* residuals) const {
 
-     
         //Eigen::Matrix<T, 8, 1> udq(parameters);
         //Eigen::Matrix<T, 8, 1> dual_quat_last(parameters);// = Eigen::Map<Eigen::Matrix<T, 8, 1>>(parameters[0]);
         Eigen::Matrix<T, 8, 1> dual_quat_last = Eigen::Map<const Eigen::Matrix<T, 8, 1>>(parameters);
@@ -76,7 +75,6 @@ struct SurfCostFunction {
     template <typename T>
     bool operator()(const T* const parameters, T* residuals) const {
 
-     
         //Eigen::Matrix<T, 8, 1> udq(parameters);
         //Eigen::Matrix<T, 8, 1> dual_quat(parameters); //= Eigen::Map<Eigen::Matrix<T, 8, 1>>(parameters[0]);
         Eigen::Map<const Eigen::Matrix<T, 8, 1>> dual_quat(parameters);
@@ -125,10 +123,25 @@ struct STDCostFunction {
         : stdC_dq(stdC_dq), stdM_dq(stdM_dq) {}
 
     template <typename T>
-    bool operator()(const T* const parameters, T* residuals) const {     
-     
-        residuals[0] =  T(0.0);
+    bool operator()(const T* const parameters, T* residuals) const {
+
+        Eigen::Matrix<T, 8, 1> Q_M = stdM_dq.template cast<T>(); 
+        Eigen::Matrix<T, 8, 1> Q_C = stdC_dq.template cast<T>(); 
+
+        Eigen::Map<const Eigen::Matrix<T, 8, 1>> dual_quat(parameters);
+        Eigen::Matrix<T, 8, 1> Q_opti = dual_quat;
+
+        Eigen::Matrix<T, 8, 1> Vf = dualquatMult(dq_conjugate(Q_M),dualquatMult(Q_opti,Q_C));
+
+        Eigen::Matrix<T, 8, 1> dq_unit;
+        dq_unit<<T(1.0),T(0.0),T(0.0),T(0.0),T(0.0),T(0.0),T(0.0),T(0.0);
+        dq_unit = Vf - dq_unit;
+
+        T norm_real = dq_unit.head(4).norm();
+        T norm_dual = dq_unit.tail(4).norm();
+        T norm_dq = ceres::sqrt(norm_real * norm_real + norm_dual * norm_dual);
         
+        residuals[0] =  norm_dq;
         return true;
     }
 
@@ -605,17 +618,39 @@ void OdomEstimationClass::addSurfDQCostFactor(const pcl::PointCloud<pcl::PointXY
 
 }
 
-void OdomEstimationClass::addSTDCostFactor(const std::vector<STDesc>& stdC_pair, const std::vector<STDesc>& stdM_pair, ceres::Problem& problem, ceres::LossFunction *loss_function, ceres::Manifold* dq_manifold)
+void OdomEstimationClass::addSTDCostFactor(std::vector<STDesc> stdC_pair, std::vector<STDesc> stdM_pair, ceres::Problem& problem, ceres::LossFunction *loss_function, ceres::Manifold* dq_manifold)
 {
 
-    Eigen::Matrix<double,8,1> stdC_dq;
-    stdC_dq<<1.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0;
-    Eigen::Matrix<double,8,1> stdM_dq;
-    stdM_dq<<1.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0;
+    std::cout<<"Ingrese a STD"<<std::endl;
+    std::cout<<"tamanio: "<< stdC_pair.size()<<std::endl;
+    
 
-    ceres::CostFunction *cost_function = new ceres::AutoDiffCostFunction<STDCostFunction, 1, 8>( new STDCostFunction(stdC_dq, stdM_dq));
-    problem.AddResidualBlock(cost_function, loss_function, parameters); 
-    // problem.SetManifold(parameters,dq_manifold);       
+    for (size_t i = 0; i < stdC_pair.size(); ++i) {
+
+        const auto& descC = stdC_pair[i];
+        const auto& descM = stdM_pair[i];
+
+        // Extraer los datos de descC
+        Eigen::Matrix3d axesC = descC.calculateReferenceFrame();
+        Eigen::Quaterniond quatC(axesC);
+        Eigen::Matrix<double,3,1> centerC(descC.center_.x(),descC.center_.y(),descC.center_.z());
+
+        // Extraer los datos de descM
+        Eigen::Matrix3d axesM = descM.calculateReferenceFrame();
+        Eigen::Quaterniond quatM(axesM);
+        Eigen::Matrix<double,3,1> centerM(descC.center_.x(),descC.center_.y(),descC.center_.z());
+
+        // STD descritpor to DQ
+        Eigen::Matrix<double,8,1> stdC_dq;
+        stdC_dq = ToDQ_T(quatC,centerC);
+        Eigen::Matrix<double,8,1> stdM_dq;
+        stdM_dq = ToDQ_T(quatM,centerM);    
+
+        ceres::CostFunction *cost_function = new ceres::AutoDiffCostFunction<STDCostFunction, 1, 8>(new STDCostFunction(stdC_dq, stdM_dq));
+        problem.AddResidualBlock(cost_function, loss_function, parameters); 
+        // problem.SetManifold(parameters,dq_manifold);   
+    }
+
     
 
 }

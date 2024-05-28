@@ -29,6 +29,8 @@ if(CMAKE_SYSTEM_PROCESSOR MATCHES "(x86)|(X86)|(amd64)|(AMD64)" )
 else()
   add_definitions(-DMP_PROC_NUM=1)
 endif()
+# Find nanoflannConfig.cmake:
+find_package(nanoflann)
 
 find_package(catkin REQUIRED COMPONENTS
   eigen_conversions
@@ -43,7 +45,7 @@ find_package(catkin REQUIRED COMPONENTS
   pcl_conversions
   pcl_ros
   tf_conversions
-  nanoflann
+  
 )
 
 

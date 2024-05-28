@@ -70,6 +70,7 @@ ros::Publisher pubOdometryDiff;
 ros::Publisher pose_pub_prev ;
 ros::Publisher pose_pub_curr;
 ros::Publisher pubSTD ;
+ros::Publisher cloud_pub;
 
 
 ros::Publisher time_average;
@@ -220,8 +221,8 @@ void tfCallback(const tf2_msgs::TFMessage::ConstPtr& msg) {
     }
 }
 
-void STD_matching(std::vector<STDesc> stds_curr, std::deque<STDesc>  std_local_map,
-                  std::vector<STDesc> stdC_pair, std::vector<STDesc> stdM_pair,
+void STD_matching(std::vector<STDesc>& stds_curr, std::deque<STDesc>&  std_local_map,
+                  std::vector<STDesc>& stdC_pair, std::vector<STDesc>& stdM_pair,
                   std::unique_ptr<nanoflann::KDTreeEigenMatrixAdaptor<Eigen::MatrixXf>>& index, ros::Publisher pubSTD){
 
     int cont_desc_pairs= 0;
@@ -304,8 +305,6 @@ void odom_estimation(){
     //////////// STD descriptor inicialization ///////////////////////////////////////////////////////
     std::vector<STDesc> stds_curr;
     std::deque<STDesc> std_local_map;
-    std::vector<STDesc> stdC_pair;
-    std::vector<STDesc> stdM_pair;
 
     pcSTD::Ptr current_cloud(new pcSTD); // pointcloud of the original sensor. It is used to std extractor
     pcSTD::Ptr current_cloud_world(new pcSTD); // pointcloud of the original sensor. It is used to std extractor
@@ -347,8 +346,8 @@ void odom_estimation(){
     while(1){
 
         // STD descriptors (current and map matching)
-        std::vector<STDesc> stds_curr_pair;
-        std::vector<STDesc> stds_map_pair;
+        std::vector<STDesc> stdC_pair;
+        std::vector<STDesc> stdM_pair;
 
         if(!pointCloudEdgeBuf.empty() && !pointCloudSurfBuf.empty()){
 
@@ -393,6 +392,7 @@ void odom_estimation(){
 
                 ////////////////////////////////////////////// STD matching
                 STD_matching(stds_curr, std_local_map, stdC_pair, stdM_pair, index, pubSTD);
+
                 //////////////////////////////////////////////////////////////////////////////////
 
                 odomEstimation.updatePointsToMap(pointcloud_edge_in, pointcloud_surf_in, stdC_pair, stdM_pair, clear_map, cropBox_len);
@@ -501,7 +501,7 @@ void odom_estimation(){
              
             // publish odometry
             nav_msgs::Odometry laserOdometry;
-            laserOdometry.header.frame_id = "odom";
+            laserOdometry.header.frame_id = "odom_dq";
             laserOdometry.child_frame_id = childframeID;
             laserOdometry.header.stamp = pointcloud_time;
             laserOdometry.pose.pose.orientation.x = q_current.x();
@@ -513,7 +513,7 @@ void odom_estimation(){
             laserOdometry.pose.pose.position.z = t_current.z();
 
             nav_msgs::Odometry odomDiff;
-            odomDiff.header.frame_id = "odom";
+            odomDiff.header.frame_id = "odom_dq";
             odomDiff.child_frame_id = childframeID;
             odomDiff.header.stamp = pointcloud_time;
             odomDiff.pose.pose.orientation.x = q_diff.x();
@@ -546,6 +546,14 @@ void odom_estimation(){
             std_msgs::Float64 time_msg;
             time_msg.data = time_delay*1000.0;
             time_average.publish(time_msg);
+
+
+            // publish map:
+             sensor_msgs::PointCloud2 output_cloud;
+            pcl::toROSMsg(*current_cloud_world, output_cloud);
+            output_cloud.header.frame_id = "map";  // O el frame_id que desees
+            cloud_pub.publish(output_cloud);
+
 
          }
 
@@ -600,12 +608,13 @@ int main(int argc, char **argv)
     ros::Subscriber subLaserCloud = nh.subscribe<sensor_msgs::PointCloud2>(pcTopic, 100, laserCloudHandler);
 
 
-    pubLaserOdometry = nh.advertise<nav_msgs::Odometry>("/odom", 100);
+    pubLaserOdometry = nh.advertise<nav_msgs::Odometry>("/odom_dq", 100);
     pubOdometryDiff = nh.advertise<nav_msgs::Odometry>("/odom_diff", 100);
     time_average = nh.advertise<std_msgs::Float64>("/time_average", 100);
     pose_pub_prev = nh.advertise<geometry_msgs::PoseArray>("std_prev_poses", 10);
     pose_pub_curr = nh.advertise<geometry_msgs::PoseArray>("std_curr_poses", 10);
     pubSTD = nh.advertise<visualization_msgs::MarkerArray>("pair_std", 10);
+    cloud_pub = nh.advertise<sensor_msgs::PointCloud2>("output_cloud", 1);
 
 
     std::thread odom_estimation_process{odom_estimation};

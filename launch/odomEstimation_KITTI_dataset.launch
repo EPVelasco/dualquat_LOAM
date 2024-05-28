@@ -23,7 +23,7 @@
     <param name="surf_limit" type="double" value="150" />
     <!-- <param name="/pcl_edge" type="str" value="/laser_cloud_edge" /> 
     <param name="/pcl_surf" type="str" value="/laser_cloud_surf" /> -->
-    <param name="/childframeID" type="str" value="velodyne" /> 
+    <param name="/childframeID" type="str" value="velodyne2" /> 
     <param name="cropBox_len" type="double" value="800" /> 
 
         <!-- <node pkg="tf" type="static_transform_publisher" name="word2map_tf"  args="0.0 -0.32 1.73 -1.6 0.05 0 /world /map 10" />
@@ -43,14 +43,14 @@
     <param name="/path_odom"                 type="str" value="/epvelasco/docker_ws/ceres_ROS_docker/resultados/DQ/exp27/10.txt" /> 
     <param name="/path_calib" type="str" value="/home/lo-udq/catkin_ws/src/odom_estimation_pc/gt_kitti/calib_velo_camera/00.txt" />
    
-    <node pkg="tf" type="static_transform_publisher" name="word2odom_tf"  args="0 0 0 0 0 0 /map /odom 10" />
+    <!-- <node pkg="tf" type="static_transform_publisher" name="word2odom_tf"  args="0 0 0 0 0 0 /map /odom 10" /> -->
 
     <node pkg="dualquat_loam" type="dq_pose_estimation_node" name="dq_pose_estimation_node" output="screen"/>
 
 
-    <node pkg="hector_trajectory_server" type="hector_trajectory_server" name="trajectory_loDQ" ns="base_dq" >
+    <node pkg="hector_trajectory_server" type="hector_trajectory_server" name="trajectory_loDQ" ns="dualquat_odom" >
         <param name="/target_frame_name" value="odom" />
-        <param name="/source_frame_name" value="velodyne" />
+        <param name="/source_frame_name" value="velodyne2" />
         <param name="/trajectory_update_rate" value="10.0" />
         <param name="/trajectory_publish_rate" value="10.0" />
 
