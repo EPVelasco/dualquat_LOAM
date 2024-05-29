@@ -24,7 +24,7 @@
     <!-- <param name="/pcl_edge" type="str" value="/laser_cloud_edge" /> 
     <param name="/pcl_surf" type="str" value="/laser_cloud_surf" /> -->
     <param name="/childframeID" type="str" value="velodyne2" /> 
-    <param name="cropBox_len" type="double" value="800" /> 
+    <param name="cropBox_len" type="double" value="200" /> 
 
         <!-- <node pkg="tf" type="static_transform_publisher" name="word2map_tf"  args="0.0 -0.32 1.73 -1.6 0.05 0 /world /map 10" />
         <node pkg="tf" type="static_transform_publisher" name="word2map_tf"  args="0.0 -0.32 1.73 1.05 0 0 /world /map 10" />
@@ -35,15 +35,15 @@
         <param name="/trajectory_publish_rate" value="10.0" />
     </node> -->
 
-    <!-- <node pkg="dualquat_loam" type="laser_mapping" name="laser_mapping" >
+    <node pkg="dualquat_loam" type="laser_mapping" name="laser_mapping" >
     <param name="scan_period" type="double" value="0.1" /> 
-    </node>  -->
+    </node> 
 
     <param name="save_data" type="bool" value="true" />    
     <param name="/path_odom"                 type="str" value="/epvelasco/docker_ws/ceres_ROS_docker/resultados/DQ/exp27/10.txt" /> 
     <param name="/path_calib" type="str" value="/home/lo-udq/catkin_ws/src/odom_estimation_pc/gt_kitti/calib_velo_camera/00.txt" />
    
-    <!-- <node pkg="tf" type="static_transform_publisher" name="word2odom_tf"  args="0 0 0 0 0 0 /map /odom 10" /> -->
+    <node pkg="tf" type="static_transform_publisher" name="word2odom_tf"  args="0 0 0 0 0 0 /map /odom 10" />
 
     <node pkg="dualquat_loam" type="dq_pose_estimation_node" name="dq_pose_estimation_node" output="screen"/>
 

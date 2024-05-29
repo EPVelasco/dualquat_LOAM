@@ -120,22 +120,26 @@ private:
 
 struct STDCostFunction {
     STDCostFunction(const Eigen::Matrix<double,8,1>& stdC_dq, const Eigen::Matrix<double,8,1>& stdM_dq)
-        : stdC_dq(stdC_dq), stdM_dq(stdM_dq) {}
+        : stdC_dq(stdC_dq), stdM_dq(stdM_dq) {}   
 
     template <typename T>
     bool operator()(const T* const parameters, T* residuals) const {
 
-        Eigen::Matrix<T, 8, 1> Q_M = stdM_dq.template cast<T>(); 
-        Eigen::Matrix<T, 8, 1> Q_C = stdC_dq.template cast<T>(); 
+        Eigen::Matrix<T, 8, 1> Q_M = stdC_dq.template cast<T>(); 
+        Eigen::Matrix<T, 8, 1> Q_C = stdM_dq.template cast<T>(); 
 
         Eigen::Map<const Eigen::Matrix<T, 8, 1>> dual_quat(parameters);
         Eigen::Matrix<T, 8, 1> Q_opti = dual_quat;
 
-        Eigen::Matrix<T, 8, 1> Vf = dualquatMult(dq_conjugate(Q_M),dualquatMult(Q_opti,Q_C));
+        Eigen::Matrix<T, 8, 1> Vf = dualquatMult(dq_conjugate(Q_M),dualquatMult(Q_C,Q_opti));
+        Eigen::Matrix<T, 8, 1> Vf_abs = Vf;
+        Vf_abs[0] = abs(Vf_abs[0]);
 
         Eigen::Matrix<T, 8, 1> dq_unit;
         dq_unit<<T(1.0),T(0.0),T(0.0),T(0.0),T(0.0),T(0.0),T(0.0),T(0.0);
-        dq_unit = Vf - dq_unit;
+
+
+        dq_unit = dq_unit - Vf_abs;
 
         T norm_real = dq_unit.head(4).norm();
         T norm_dual = dq_unit.tail(4).norm();
@@ -145,11 +149,48 @@ struct STDCostFunction {
         return true;
     }
 
+
+    // template <typename T>
+    // bool operator()(const T* const parameters, T* residuals) const {
+
+    //     Eigen::Matrix<T, 8, 1> Q_M = stdM_dq.template cast<T>(); 
+    //     Eigen::Matrix<T, 8, 1> Q_C = stdC_dq.template cast<T>(); 
+
+    //     Eigen::Map<const Eigen::Matrix<T, 8, 1>> dual_quat(parameters);
+    //     Eigen::Matrix<T, 8, 1> Q = dual_quat;
+
+    //     Eigen::Matrix<T, 4, 1> Q_traslation = get_translation_dual(Q);
+
+    //     Eigen::Matrix<T, 4, 1> M_point = get_translation_dual(Q_M);
+    //     Eigen::Matrix<T, 4, 1> C_point = get_translation_dual(Q_C);
+
+    //     Eigen::Quaternion<T> eigen_quaternion;
+    //     eigen_quaternion.w() = parameters[0];
+    //     eigen_quaternion.x() = parameters[1];
+    //     eigen_quaternion.y() = parameters[2]; 
+    //     eigen_quaternion.z() = parameters[3];
+
+    //     Eigen::Matrix<T, 4, 1> eigen_translation(Q_traslation[0],Q_traslation[1],Q_traslation[2],Q_traslation[3]);
+
+    //     Eigen::Matrix<T, 4, 1> source_T(C_point[0], C_point[1],C_point[2], C_point[3]);
+
+    //     Eigen::Matrix<T, 4, 1> transformed_source = quaternion_left(eigen_quaternion)* 
+    //                                                 quaternion_right(conjugate_quaternion(eigen_quaternion))* 
+    //                                                 source_T + eigen_translation;
+
+    //     residuals[0] = transformed_source[1] - M_point[1];
+    //     residuals[1] = transformed_source[2] - M_point[2];
+    //     residuals[2] = transformed_source[3] - M_point[3];
+
+    //     return true;
+    // }
+
 private:
     const Eigen::Matrix<double,8,1> stdC_dq;
     const Eigen::Matrix<double,8,1> stdM_dq;
 };
 
+ 
 struct UDQManifold {
 
     template<typename T>
@@ -486,6 +527,11 @@ void OdomEstimationClass::addEdgeDQCostFactor(const pcl::PointCloud<pcl::PointXY
 
                 // Crear la traslación
                 Eigen::Matrix<double,3,1> punto_local_m(curr_point.x(),curr_point.y(),curr_point.z());
+
+                // std::cout<<"Punto Local: " <<punto_local_m.transpose()<<std::endl;
+                // std::cout<<"Punto a: " <<point_a.transpose()<<std::endl;
+                // std::cout<<"Punto b: " <<point_b.transpose()<<std::endl;
+
                 Local_line_Q = ToDQ_T(cuaternion,punto_local_m);
 
 
@@ -621,8 +667,8 @@ void OdomEstimationClass::addSurfDQCostFactor(const pcl::PointCloud<pcl::PointXY
 void OdomEstimationClass::addSTDCostFactor(std::vector<STDesc> stdC_pair, std::vector<STDesc> stdM_pair, ceres::Problem& problem, ceres::LossFunction *loss_function, ceres::Manifold* dq_manifold)
 {
 
-    std::cout<<"Ingrese a STD"<<std::endl;
-    std::cout<<"tamanio: "<< stdC_pair.size()<<std::endl;
+    // std::cout<<"Ingrese a STD"<<std::endl;
+    // std::cout<<"tamanio: "<< stdC_pair.size()<<std::endl;
     
 
     for (size_t i = 0; i < stdC_pair.size(); ++i) {
@@ -638,13 +684,20 @@ void OdomEstimationClass::addSTDCostFactor(std::vector<STDesc> stdC_pair, std::v
         // Extraer los datos de descM
         Eigen::Matrix3d axesM = descM.calculateReferenceFrame();
         Eigen::Quaterniond quatM(axesM);
-        Eigen::Matrix<double,3,1> centerM(descC.center_.x(),descC.center_.y(),descC.center_.z());
+        Eigen::Matrix<double,3,1> centerM(descM.center_.x(),descM.center_.y(),descM.center_.z());
 
         // STD descritpor to DQ
         Eigen::Matrix<double,8,1> stdC_dq;
         stdC_dq = ToDQ_T(quatC,centerC);
         Eigen::Matrix<double,8,1> stdM_dq;
         stdM_dq = ToDQ_T(quatM,centerM);    
+
+        // std::cout<<"Mapa: "<<centerM.transpose()<<std::endl;
+        // std::cout<<"Curr: "<<centerC.transpose()<<std::endl;
+
+        // std::cout<<"MapQ: "<<quatM.coeffs().transpose()<<std::endl;
+        // std::cout<<"CurQ: "<<quatC.coeffs().transpose()<<std::endl;
+
 
         ceres::CostFunction *cost_function = new ceres::AutoDiffCostFunction<STDCostFunction, 1, 8>(new STDCostFunction(stdC_dq, stdM_dq));
         problem.AddResidualBlock(cost_function, loss_function, parameters); 

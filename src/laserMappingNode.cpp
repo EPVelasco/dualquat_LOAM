@@ -120,7 +120,7 @@ int main(int argc, char **argv)
 
     laserMapping.init(map_resolution);
     ros::Subscriber subLaserCloud = nh.subscribe<sensor_msgs::PointCloud2>("/lidar_filtered", 100, velodyneHandler);
-    ros::Subscriber subOdometry = nh.subscribe<nav_msgs::Odometry>("/odom", 100, odomCallback);
+    ros::Subscriber subOdometry = nh.subscribe<nav_msgs::Odometry>("/odom_dq", 100, odomCallback);
 
     map_pub = nh.advertise<sensor_msgs::PointCloud2>("/map", 100);
     std::thread laser_mapping_process{laser_mapping};

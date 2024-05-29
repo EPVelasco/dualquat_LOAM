@@ -156,9 +156,9 @@ void printVector(const std::vector<T>& vec) {
 
 void addDescriptorToMatrix(Eigen::MatrixXf& mat, const STDesc& desc, int row) {
 
-    // la matriz tiene 36 elementos
+    // la matriz tiene 24 elementos
     Eigen::Vector3f side_length = desc.side_length_.cast<float>();
-    Eigen::Vector3f angle = desc.angle_.cast<float>();
+  //  Eigen::Vector3f angle = desc.angle_.cast<float>();
     Eigen::Vector3f center = desc.center_.cast<float>();
     Eigen::Vector3f vertex_A = desc.vertex_A_.cast<float>();
     Eigen::Vector3f vertex_B = desc.vertex_B_.cast<float>();
@@ -166,24 +166,24 @@ void addDescriptorToMatrix(Eigen::MatrixXf& mat, const STDesc& desc, int row) {
     Eigen::Vector3f normal1 = desc.normal1_.cast<float>();
     Eigen::Vector3f normal2 = desc.normal2_.cast<float>();
     Eigen::Vector3f normal3 = desc.normal3_.cast<float>();
-    Eigen::Matrix3d axes = desc.calculateReferenceFrame();
-    Eigen::Matrix<float, 9, 1> axes_vec;
-    axes_vec << axes(0),axes(1),axes(2),axes(3),axes(4),axes(5),axes(6),axes(7),axes(8);
+    //Eigen::Matrix3d axes = desc.calculateReferenceFrame();
+   // Eigen::Matrix<float, 9, 1> axes_vec;
+   // axes_vec << axes(0),axes(1),axes(2),axes(3),axes(4),axes(5),axes(6),axes(7),axes(8);
     mat.block<1, 3>(row, 0) = side_length.transpose();
-    mat.block<1, 3>(row, 3) = angle.transpose();
-    mat.block<1, 3>(row, 6) = center.transpose();
-    mat.block<1, 3>(row, 9) = vertex_A.transpose();
-    mat.block<1, 3>(row, 12) = vertex_B.transpose();
-    mat.block<1, 3>(row, 15) = vertex_C.transpose();
-    mat.block<1, 3>(row, 18) = normal1.transpose();
-    mat.block<1, 3>(row, 21) = normal2.transpose();
-    mat.block<1, 3>(row, 24) = normal3.transpose();
-    mat.block<1, 9>(row, 27) = axes_vec.transpose();
+    //mat.block<1, 3>(row, 3) = angle.transpose();
+    mat.block<1, 3>(row, 3) = center.transpose();
+    mat.block<1, 3>(row, 6) = vertex_A.transpose();
+    mat.block<1, 3>(row, 9) = vertex_B.transpose();
+    mat.block<1, 3>(row, 12) = vertex_C.transpose();
+    mat.block<1, 3>(row, 15) = normal1.transpose();
+    mat.block<1, 3>(row, 18) = normal2.transpose();
+    mat.block<1, 3>(row, 21) = normal3.transpose();
+    //mat.block<1, 9>(row, 27) = axes_vec.transpose();
 }
 
 void updateMatrixAndKDTree(Eigen::MatrixXf& mat, std::unique_ptr<nanoflann::KDTreeEigenMatrixAdaptor<Eigen::MatrixXf>>& index, const std::deque<STDesc>& std_local_map) {
     int num_desc = std_local_map.size();
-    mat.resize(num_desc, 36);
+    mat.resize(num_desc, 24);
 
     // Rellenar la matriz con los descriptores actuales
     for (size_t i = 0; i < std_local_map.size(); ++i) {
@@ -191,7 +191,7 @@ void updateMatrixAndKDTree(Eigen::MatrixXf& mat, std::unique_ptr<nanoflann::KDTr
     }
 
     // Recrear el KD-Tree con la matriz actualizada
-    index = std::make_unique<nanoflann::KDTreeEigenMatrixAdaptor<Eigen::MatrixXf>>(36, std::cref(mat), 10 /* max leaf */);
+    index = std::make_unique<nanoflann::KDTreeEigenMatrixAdaptor<Eigen::MatrixXf>>(24, std::cref(mat), 10 /* max leaf */);
     index->index_->buildIndex();
 }
 
@@ -373,16 +373,21 @@ Eigen::MatrixXf promediarVertices(const Eigen::MatrixXf &vertices, const std::ve
 }
 
 void updateMatrixAndKDTreeWithFiltering(Eigen::MatrixXf& mat, std::unique_ptr<nanoflann::KDTreeEigenMatrixAdaptor<Eigen::MatrixXf>>& index, std::deque<STDesc>& std_local_map,  ConfigSetting config_setting) {
- //   std::cout << "Tamaño de std_local_map: " << std_local_map.size() << std::endl;
- //   std::cout << "Tamaño de  a mat: " << mat.size()/36 << std::endl;
+//    std::cout << "Tamaño de std_local_map: " << std_local_map.size() << std::endl;
+//    std::cout << "Tamaño de  a mat: " << mat.size()/24 << std::endl;
+
 
     int num_desc = std_local_map.size();
-    mat.resize(num_desc, 36);
 
-    for (size_t i = 0; i < std_local_map.size(); ++i) {
-        addDescriptorToMatrix(mat, std_local_map[i], i);
-    }
- //   std::cout << "Tamaño de std_local_map a mat: " << mat.size()/36 << std::endl;
+
+    // mat.resize(num_desc, 24);
+
+    // for (size_t i = 0; i < std_local_map.size(); ++i) {
+    //     addDescriptorToMatrix(mat, std_local_map[i], i);
+    // }
+
+    
+ //   std::cout << "Tamaño de std_local_map a mat: " << mat.size()/24 << std::endl;
 
  
 
@@ -440,7 +445,10 @@ void updateMatrixAndKDTreeWithFiltering(Eigen::MatrixXf& mat, std::unique_ptr<na
 
     // Actualizar la matriz y el KD-Tree con los descriptores filtrados y fusionados
     num_desc = std_local_map.size();
-    mat.resize(num_desc, 36);
+    mat.resize(num_desc, 24);
+
+    // std::cout << "Tamaño de std_local_map: " << std_local_map.size() << std::endl;
+    // std::cout << "Tamaño de  a mat: " << mat.size()/24 << std::endl;
 
     for (size_t i = 0; i < std_local_map.size(); ++i) {
         addDescriptorToMatrix(mat, std_local_map[i], i); // aqui se añaden ya los descritproes filtrados al mapa STD_local
@@ -448,7 +456,7 @@ void updateMatrixAndKDTreeWithFiltering(Eigen::MatrixXf& mat, std::unique_ptr<na
     }
 
     // Recrear el KD-Tree con la matriz actualizada
-    index = std::make_unique<nanoflann::KDTreeEigenMatrixAdaptor<Eigen::MatrixXf>>(36, std::cref(mat), 10 /* max leaf */);
+    index = std::make_unique<nanoflann::KDTreeEigenMatrixAdaptor<Eigen::MatrixXf>>(24, std::cref(mat), 10 /* max leaf */);
     index->index_->buildIndex();
 }
 

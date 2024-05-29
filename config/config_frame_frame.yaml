@@ -1,6 +1,6 @@
 # pre process
 # ds_size: 0.2 // hasta ahora el mejor
-ds_size: 0.2
+ds_size: 0.1
 maximum_corner_num: 10
 
 # # Original key points
@@ -26,7 +26,7 @@ corner_thre: 10
 # std descriptor
 descriptor_near_num: 50
 descriptor_min_len: 2
-descriptor_max_len: 5000
+descriptor_max_len: 50
 non_max_suppression_radius: 5.0
 std_side_resolution: 0.5
 
@@ -50,8 +50,8 @@ icp_threshold: 0.4
 
 # window size
 max_window_size: 10
-kdtree_threshold: 10
-epsilon: 1.0
+kdtree_threshold: 10.0
+epsilon: 0.001
 # # candidate search
 # skip_near_num: 20
 # candidate_num: 20

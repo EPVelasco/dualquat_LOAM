@@ -72,6 +72,9 @@ ros::Publisher pose_pub_curr;
 ros::Publisher pubSTD ;
 ros::Publisher cloud_pub;
 
+ros::Publisher std_pub_Map;
+ros::Publisher std_pub_Cur;
+
 
 ros::Publisher time_average;
 bool save_data = true;
@@ -244,7 +247,7 @@ void STD_matching(std::vector<STDesc>& stds_curr, std::deque<STDesc>&  std_local
 
 
         query.insert(query.end(), side_length.data(), side_length.data() + 3);
-        query.insert(query.end(), angle.data(), angle.data() + 3);
+        //query.insert(query.end(), angle.data(), angle.data() + 3);
         query.insert(query.end(), center.data(), center.data() + 3);
         query.insert(query.end(), vertex_A.data(), vertex_A.data() + 3);
         query.insert(query.end(), vertex_B.data(), vertex_B.data() + 3);
@@ -252,7 +255,7 @@ void STD_matching(std::vector<STDesc>& stds_curr, std::deque<STDesc>&  std_local
         query.insert(query.end(), norms1.data(), norms1.data() + 3);
         query.insert(query.end(), norms2.data(), norms2.data() + 3);
         query.insert(query.end(), norms3.data(), norms3.data() + 3);
-        query.insert(query.end(), axes_f.data(), axes_f.data() + axes_f.size());
+        //query.insert(query.end(), axes_f.data(), axes_f.data() + axes_f.size());
 
         // Buscar el descriptor más cercano
         const size_t num_results = 1;
@@ -267,7 +270,7 @@ void STD_matching(std::vector<STDesc>& stds_curr, std::deque<STDesc>&  std_local
             
             if (ret_indexes[i] < std_local_map.size() && out_dists_sqr[i] < config_setting.kdtree_threshold_) {
                 cont_desc_pairs++;
-                generateArrow(desc, std_local_map[ret_indexes[i]], marker_array, id, msg_point->header);
+               // generateArrow(desc, std_local_map[ret_indexes[i]], marker_array, id, msg_point->header);
 
                 stdM_pair.push_back(std_local_map[ret_indexes[i]]);
                 stdC_pair.push_back(desc);
@@ -308,7 +311,7 @@ void odom_estimation(){
 
     pcSTD::Ptr current_cloud(new pcSTD); // pointcloud of the original sensor. It is used to std extractor
     pcSTD::Ptr current_cloud_world(new pcSTD); // pointcloud of the original sensor. It is used to std extractor
-    Eigen::MatrixXf mat(0, 36);
+    Eigen::MatrixXf mat(0, 24);
     std::unique_ptr<nanoflann::KDTreeEigenMatrixAdaptor<Eigen::MatrixXf>> index;
     Eigen::Affine3d poseSTD = Eigen::Affine3d::Identity();
     std::deque<int> counts_per_iteration; // use for the cropping data of std_local_map
@@ -366,27 +369,30 @@ void odom_estimation(){
 
             ////////////// read original pc to extract STD 
             if (readPC(current_cloud)){
-                down_sampling_voxel(*current_cloud, config_setting.ds_size_); 
-                
+                down_sampling_voxel(*current_cloud, config_setting.ds_size_);                
             }
 
             mutex_lock.unlock();
 
-            //////////////////////////////// STD extractor
-            poseSTD = odom;
-            pcl::transformPointCloud(*current_cloud, *current_cloud_world, poseSTD);
-            std_manager->GenerateSTDescs(current_cloud_world, stds_curr);
-            ////////////////////////////////////////////////////////////////////////////
+          
 
             if(is_odom_inited == false){
                 // extract std for the initial frame K=0
-                std_local_map.insert(std_local_map.end(), stds_curr.begin(), stds_curr.end());
+               // std_local_map.insert(std_local_map.end(), stds_curr.begin(), stds_curr.end());
 
                 odomEstimation.initMapWithPoints(pointcloud_edge_in, pointcloud_surf_in);
                 is_odom_inited = true;
                 ROS_INFO("odom inited");
 
             }else{
+
+                    //////////////////////////////// STD extractor
+                poseSTD = odom_prev;
+                pcl::transformPointCloud(*current_cloud, *current_cloud_world, poseSTD);
+                std_manager->GenerateSTDescs(current_cloud_world, stds_curr);
+                ////////////////////////////////////////////////////////////////////////////
+
+
                 std::chrono::time_point<std::chrono::system_clock> start, end;
                 start = std::chrono::system_clock::now();
 
@@ -495,6 +501,10 @@ void odom_estimation(){
 
             // update mat matrix with filtering elements. it's necesary for the kdtree matching
             updateMatrixAndKDTreeWithFiltering(mat, index, std_local_map, config_setting);
+
+            // std_manager->publishPoses(std_pub_Map, stdM_pair, msg_point->header,"map");
+            // std_manager->publishPoses(std_pub_Cur, stdC_pair, msg_point->header,"map");
+
 
             //////////////////////////////////////////////////////////////////////////////
 
@@ -614,7 +624,10 @@ int main(int argc, char **argv)
     pose_pub_prev = nh.advertise<geometry_msgs::PoseArray>("std_prev_poses", 10);
     pose_pub_curr = nh.advertise<geometry_msgs::PoseArray>("std_curr_poses", 10);
     pubSTD = nh.advertise<visualization_msgs::MarkerArray>("pair_std", 10);
-    cloud_pub = nh.advertise<sensor_msgs::PointCloud2>("output_cloud", 1);
+    cloud_pub = nh.advertise<sensor_msgs::PointCloud2>("output_cloud", 10);
+
+    std_pub_Map = nh.advertise<geometry_msgs::PoseArray>("std_prev_poses", 10);
+    std_pub_Cur = nh.advertise<geometry_msgs::PoseArray>("std_curr_poses", 10);
 
 
     std::thread odom_estimation_process{odom_estimation};

@@ -97,7 +97,7 @@ class OdomEstimationClass
         void occlude_pcd(pcl::PointCloud<pcl::PointXYZ>::Ptr & cld_ptr,int dim, double threshA, double threshB);
 		void addEdgeDQCostFactor(const pcl::PointCloud<pcl::PointXYZ>::Ptr& pc_in, const pcl::PointCloud<pcl::PointXYZ>::Ptr& map_in, ceres::Problem& problem, ceres::LossFunction *loss_function, ceres::Manifold* dq_manifold, double cropBox_len);
 		void addSurfDQCostFactor(const pcl::PointCloud<pcl::PointXYZ>::Ptr& pc_in, const pcl::PointCloud<pcl::PointXYZ>::Ptr& map_in, ceres::Problem& problem, ceres::LossFunction *loss_function, ceres::Manifold* dq_manifold, double cropBox_len);
-		   void addSTDCostFactor(std::vector<STDesc> stdC_pair, std::vector<STDesc> stdM_pair, ceres::Problem& problem, ceres::LossFunction *loss_function, ceres::Manifold* dq_manifold);
+		void addSTDCostFactor(std::vector<STDesc> stdC_pair, std::vector<STDesc> stdM_pair, ceres::Problem& problem, ceres::LossFunction *loss_function, ceres::Manifold* dq_manifold);
 
 };
 
