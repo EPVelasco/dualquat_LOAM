@@ -13,7 +13,7 @@
 
 using namespace DQ_robotics;
 
-std::string path_estadistic = "/epvelasco/docker_ws/ceres_ROS_docker/resultados/DQ/exp27/estadisticas.txt";
+std::string path_estadistic = "/home/ws/src/resultados_dualquat_loam/estadisticas.txt";
 std::ofstream org_outputFile(path_estadistic);   
 
 struct EdgeCostFunction {
@@ -125,11 +125,10 @@ struct STDCostFunction {
     template <typename T>
     bool operator()(const T* const parameters, T* residuals) const {
 
-        Eigen::Matrix<T, 8, 1> Q_M = stdC_dq.template cast<T>(); 
-        Eigen::Matrix<T, 8, 1> Q_C = stdM_dq.template cast<T>(); 
+        Eigen::Matrix<T, 8, 1> Q_M = stdM_dq.template cast<T>(); 
+        Eigen::Matrix<T, 8, 1> Q_C = stdC_dq.template cast<T>(); 
 
-        Eigen::Map<const Eigen::Matrix<T, 8, 1>> dual_quat(parameters);
-        Eigen::Matrix<T, 8, 1> Q_opti = dual_quat;
+        Eigen::Matrix<T, 8, 1> Q_opti = Eigen::Map<const Eigen::Matrix<T, 8, 1>>(parameters);
 
         Eigen::Matrix<T, 8, 1> Vf = dualquatMult(dq_conjugate(Q_M),dualquatMult(Q_C,Q_opti));
         Eigen::Matrix<T, 8, 1> Vf_abs = Vf;
@@ -348,7 +347,7 @@ void OdomEstimationClass::updatePointsToMap(const pcl::PointCloud<pcl::PointXYZ>
             options.gradient_check_relative_precision = 1e-6;
             options.minimizer_progress_to_stdout = true;
             options.check_gradients = false;
-            options.num_threads = 10;
+            options.num_threads = 20;
 
 
             // Redirige la salida estándar al archivo
@@ -643,6 +642,11 @@ void OdomEstimationClass::addSurfDQCostFactor(const pcl::PointCloud<pcl::PointXY
                 // problem.SetManifold(parameters,dq_manifold);
 
                surf_num++;
+
+            //    /// print valores:
+            //    std::cout<<"Point Surf: "<<curr_surf_point<<std::endl;
+            //    std::cout<<"Point plane: "<<p<<std::endl;
+
             }
             else{
                 no_plane++;
@@ -669,7 +673,11 @@ void OdomEstimationClass::addSTDCostFactor(std::vector<STDesc> stdC_pair, std::v
 
     // std::cout<<"Ingrese a STD"<<std::endl;
     // std::cout<<"tamanio: "<< stdC_pair.size()<<std::endl;
-    
+
+    // odoemtria calculada:
+    Eigen::Matrix<double, 8, 1> dq_optimizado(dual_quat);
+    //dq_optimizado<< 1.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0;
+   
 
     for (size_t i = 0; i < stdC_pair.size(); ++i) {
 
@@ -695,6 +703,14 @@ void OdomEstimationClass::addSTDCostFactor(std::vector<STDesc> stdC_pair, std::v
         // std::cout<<"Mapa: "<<centerM.transpose()<<std::endl;
         // std::cout<<"Curr: "<<centerC.transpose()<<std::endl;
 
+        // std::cout<<"Mapa xyz:  "<<get_translation(stdM_dq).transpose()<<std::endl;
+
+        // std::cout<<"Curr xyz:  "<<get_translation(stdC_dq).transpose()<<std::endl;
+        
+        // std::cout<<"Error xyz:  "<<get_translation(stdC_dq).transpose() - get_translation(stdM_dq).transpose()<<std::endl;
+
+
+
         // std::cout<<"MapQ: "<<quatM.coeffs().transpose()<<std::endl;
         // std::cout<<"CurQ: "<<quatC.coeffs().transpose()<<std::endl;
 
@@ -702,9 +718,15 @@ void OdomEstimationClass::addSTDCostFactor(std::vector<STDesc> stdC_pair, std::v
         ceres::CostFunction *cost_function = new ceres::AutoDiffCostFunction<STDCostFunction, 1, 8>(new STDCostFunction(stdC_dq, stdM_dq));
         problem.AddResidualBlock(cost_function, loss_function, parameters); 
         // problem.SetManifold(parameters,dq_manifold);   
-    }
 
-    
+        // /// Transformada
+
+        // Eigen::Matrix<double, 8, 1> Vf = dualquatMult(dualquatMult(dq_optimizado,stdC_dq),dq_conjugate(stdM_dq));
+        // // std::cout<<"Transformada: "<<Vf.transpose()<<std::endl;
+        // std::cout<<"Error xyz:  "<<get_translation(Vf).transpose()<<std::endl;
+        // std::cout<<"Error quat: "<<Vf(0)<<" "<<Vf(1)<<" "<<Vf(2)<<" "<<Vf(3)<<std::endl;
+
+    }
 
 }
 

@@ -60,8 +60,9 @@ std::string stdescri = "/std_curr_poses";
 std::string stdMap   = "/std_map_poses";
 std::string pcTopic   = "/velodyne_points";
 
-std::string path_odom =  "/epvelasco/docker_ws/ceres_ROS_docker/resultados/00/00.txt";
-std::string path_calib = "/epvelasco/dataset/KITTI/rosbags_velodyne/dataset/calib_velo_camera/00.txt";
+std::string path_odom =  "/home/ws/src/resultados_dualquat_loam/00.txt";
+
+std::string path_calib = "/epvelasco/dataset/KITTI/rosbags_velodyne/dataset/calib_velo_camera/00.txt"; // no usar
 
 ros::Publisher pubLaserOdometry;
 ros::Publisher pubOdometryDiff;
@@ -224,7 +225,7 @@ void tfCallback(const tf2_msgs::TFMessage::ConstPtr& msg) {
     }
 }
 
-void STD_matching(std::vector<STDesc>& stds_curr, std::deque<STDesc>&  std_local_map,
+void STD_matching(std::vector<STDesc>& stds_curr_body, std::vector<STDesc>& stds_curr_world, std::deque<STDesc>&  std_local_map,
                   std::vector<STDesc>& stdC_pair, std::vector<STDesc>& stdM_pair,
                   std::unique_ptr<nanoflann::KDTreeEigenMatrixAdaptor<Eigen::MatrixXf>>& index, ros::Publisher pubSTD){
 
@@ -232,18 +233,22 @@ void STD_matching(std::vector<STDesc>& stds_curr, std::deque<STDesc>&  std_local
     int id = 0;
     visualization_msgs::MarkerArray marker_array;
 
-    for (const auto& desc : stds_curr) {
+    for (size_t i = 0; i < stds_curr_world.size(); ++i) {
+
+        const auto& descC_W = stds_curr_world[i];
+        const auto& descC_B = stds_curr_body[i];
+
         std::vector<float> query;
-        Eigen::Vector3f side_length = desc.side_length_.cast<float>();
-        Eigen::Vector3f angle = desc.angle_.cast<float>();
-        Eigen::Vector3f center = desc.center_.cast<float>();
-        Eigen::Vector3f vertex_A = desc.vertex_A_.cast<float>();
-        Eigen::Vector3f vertex_B = desc.vertex_B_.cast<float>();
-        Eigen::Vector3f vertex_C = desc.vertex_C_.cast<float>();
-        Eigen::Vector3f norms1 = desc.normal1_.cast<float>();
-        Eigen::Vector3f norms2 = desc.normal2_.cast<float>();
-        Eigen::Vector3f norms3 = desc.normal3_.cast<float>();
-        Eigen::Matrix3d axes_f = desc.calculateReferenceFrame();
+        Eigen::Vector3f side_length = descC_W.side_length_.cast<float>();
+        Eigen::Vector3f angle = descC_W.angle_.cast<float>();
+        Eigen::Vector3f center = descC_W.center_.cast<float>();
+        Eigen::Vector3f vertex_A = descC_W.vertex_A_.cast<float>();
+        Eigen::Vector3f vertex_B = descC_W.vertex_B_.cast<float>();
+        Eigen::Vector3f vertex_C = descC_W.vertex_C_.cast<float>();
+        Eigen::Vector3f norms1 = descC_W.normal1_.cast<float>();
+        Eigen::Vector3f norms2 = descC_W.normal2_.cast<float>();
+        Eigen::Vector3f norms3 = descC_W.normal3_.cast<float>();
+        Eigen::Matrix3d axes_f = descC_W.calculateReferenceFrame();
 
 
         query.insert(query.end(), side_length.data(), side_length.data() + 3);
@@ -270,10 +275,10 @@ void STD_matching(std::vector<STDesc>& stds_curr, std::deque<STDesc>&  std_local
             
             if (ret_indexes[i] < std_local_map.size() && out_dists_sqr[i] < config_setting.kdtree_threshold_) {
                 cont_desc_pairs++;
-               // generateArrow(desc, std_local_map[ret_indexes[i]], marker_array, id, msg_point->header);
+                //generateArrow(descC_W, std_local_map[ret_indexes[i]], marker_array, id, msg_point->header);
 
                 stdM_pair.push_back(std_local_map[ret_indexes[i]]);
-                stdC_pair.push_back(desc);
+                stdC_pair.push_back(descC_B);
                 
             }
 
@@ -306,7 +311,8 @@ void odom_estimation(){
     Eigen::Isometry3d odom_prev = Eigen::Isometry3d::Identity();
 
     //////////// STD descriptor inicialization ///////////////////////////////////////////////////////
-    std::vector<STDesc> stds_curr;
+    std::vector<STDesc> stds_curr_w;    
+    std::vector<STDesc> stds_curr_body;
     std::deque<STDesc> std_local_map;
 
     pcSTD::Ptr current_cloud(new pcSTD); // pointcloud of the original sensor. It is used to std extractor
@@ -330,23 +336,26 @@ void odom_estimation(){
     ////////////Saveing data initialization
 
     outputFile << std::scientific;
-    outputFile <<  1.0 <<" "
-               <<  0.0 <<" "
-               <<  0.0 <<" "
-               <<  0.0 <<" "
-               <<  0.0 <<" "
-               <<  1.0 <<" "
-               <<  0.0 <<" "
-               <<  0.0 <<" "
-               <<  0.0 <<" "
-               <<  0.0 <<" "
-               <<  1.0 <<" "
-               <<  0.0 << std::endl; 
+    // outputFile <<  1.0 <<" "
+    //            <<  0.0 <<" "
+    //            <<  0.0 <<" "
+    //            <<  0.0 <<" "
+    //            <<  0.0 <<" "
+    //            <<  1.0 <<" "
+    //            <<  0.0 <<" "
+    //            <<  0.0 <<" "
+    //            <<  0.0 <<" "
+    //            <<  0.0 <<" "
+    //            <<  1.0 <<" "
+    //            <<  0.0 << std::endl; 
 
    
     Eigen::Isometry3d odom = Eigen::Isometry3d::Identity();
 
     while(1){
+
+        std::chrono::time_point<std::chrono::system_clock> start, end;
+        start = std::chrono::system_clock::now();
 
         // STD descriptors (current and map matching)
         std::vector<STDesc> stdC_pair;
@@ -389,27 +398,20 @@ void odom_estimation(){
                     //////////////////////////////// STD extractor
                 poseSTD = odom_prev;
                 pcl::transformPointCloud(*current_cloud, *current_cloud_world, poseSTD);
-                std_manager->GenerateSTDescs(current_cloud_world, stds_curr);
+                std_manager->GenerateSTDescs(current_cloud_world, stds_curr_w);
+                std_manager->GenerateSTDescs(current_cloud, stds_curr_body);
                 ////////////////////////////////////////////////////////////////////////////
 
 
-                std::chrono::time_point<std::chrono::system_clock> start, end;
-                start = std::chrono::system_clock::now();
+
 
                 ////////////////////////////////////////////// STD matching
-                STD_matching(stds_curr, std_local_map, stdC_pair, stdM_pair, index, pubSTD);
+                STD_matching(stds_curr_body, stds_curr_w, std_local_map, stdC_pair, stdM_pair, index, pubSTD);
 
                 //////////////////////////////////////////////////////////////////////////////////
 
                 odomEstimation.updatePointsToMap(pointcloud_edge_in, pointcloud_surf_in, stdC_pair, stdM_pair, clear_map, cropBox_len);
-                end = std::chrono::system_clock::now();
-                std::chrono::duration<float> elapsed_seconds = end - start;
-                total_frame++;
-                float time_temp = elapsed_seconds.count() * 1000.0;
-                total_time+=time_temp;
-                time_delay = total_time/total_frame;
-                ROS_INFO("average odom estimation time %f mS", time_delay);
-                time_delay = time_delay/1000.0;
+
 
             }
 
@@ -485,12 +487,12 @@ void odom_estimation(){
             ////////////////////////////// update STD map //////////////////////////////////////
             Eigen::Affine3d pose_estimated = odom;
             pcl::transformPointCloud(*current_cloud, *current_cloud_world, pose_estimated);
-            std_manager->GenerateSTDescs(current_cloud_world, stds_curr);
+            std_manager->GenerateSTDescs(current_cloud_world, stds_curr_w);
 
-            std_local_map.insert(std_local_map.end(), stds_curr.begin(), stds_curr.end());
+            std_local_map.insert(std_local_map.end(), stds_curr_w.begin(), stds_curr_w.end());
 
                     ///////////////////// cropping elements per window in std_local_map ///////////////
-            counts_per_iteration.push_back(stds_curr.size());
+            counts_per_iteration.push_back(stds_curr_w.size());
             while (counts_per_iteration.size() > config_setting.max_window_size_) {
                 int count_to_remove = counts_per_iteration.front();
                 counts_per_iteration.pop_front();
@@ -504,6 +506,16 @@ void odom_estimation(){
 
             // std_manager->publishPoses(std_pub_Map, stdM_pair, msg_point->header,"map");
             // std_manager->publishPoses(std_pub_Cur, stdC_pair, msg_point->header,"map");
+
+
+            end = std::chrono::system_clock::now();
+            std::chrono::duration<float> elapsed_seconds = end - start;
+            total_frame++;
+            float time_temp = elapsed_seconds.count() * 1000.0;
+            total_time+=time_temp;
+            time_delay = total_time/total_frame;
+            ROS_INFO("average odom estimation time %f mS", time_delay);
+            time_delay = time_delay/1000.0;
 
 
             //////////////////////////////////////////////////////////////////////////////

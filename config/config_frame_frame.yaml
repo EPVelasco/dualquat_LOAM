@@ -24,10 +24,10 @@ proj_dis_max: 5
 corner_thre: 10
 
 # std descriptor
-descriptor_near_num: 50
-descriptor_min_len: 2
-descriptor_max_len: 50
-non_max_suppression_radius: 5.0
+descriptor_near_num: 10
+descriptor_min_len: 1
+descriptor_max_len: 500
+non_max_suppression_radius: 3.0
 std_side_resolution: 0.5
 
 
@@ -51,7 +51,7 @@ icp_threshold: 0.4
 # window size
 max_window_size: 10
 kdtree_threshold: 10.0
-epsilon: 0.001
+epsilon: 0.3
 # # candidate search
 # skip_near_num: 20
 # candidate_num: 20

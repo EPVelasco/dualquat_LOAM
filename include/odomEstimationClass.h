@@ -70,7 +70,8 @@ class OdomEstimationClass
 	
 		double parameters[8] = {1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
 	    Eigen::Map<Eigen::Matrix<double, 8, 1>> dual_quat = Eigen::Map<Eigen::Matrix<double, 8, 1>>(parameters);
-		
+
+	
 		Eigen::Isometry3d last_odom;
 
 		//kd-tree edge
