@@ -447,7 +447,7 @@ void updateMatrixAndKDTreeWithFiltering(Eigen::MatrixXf& mat, std::unique_ptr<na
     num_desc = std_local_map.size();
     mat.resize(num_desc, 24);
 
-    // std::cout << "Tamaño de std_local_map: " << std_local_map.size() << std::endl;
+    
     // std::cout << "Tamaño de  a mat: " << mat.size()/24 << std::endl;
 
     for (size_t i = 0; i < std_local_map.size(); ++i) {

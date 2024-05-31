@@ -554,8 +554,8 @@ void OdomEstimationClass::addEdgeDQCostFactor(const pcl::PointCloud<pcl::PointXY
         if (corner_num == cropBox_len)
             break;
      }
-    org_outputFile << "OK Edges: " << corner_num;
-    org_outputFile << "No Edges: " << no_corner;         
+    org_outputFile << "OK Edges: " << corner_num<<std::endl;
+    org_outputFile << "No Edges: " << no_corner<<std::endl;
    // std::cout<<"Linea: "<<corner_num<<", No linea:"<<no_corner<<std::endl;
     if(corner_num<min_edges){
         std::cout<<"At least "<< min_edges <<" points are required for edge matching."<<std::endl;
@@ -658,8 +658,8 @@ void OdomEstimationClass::addSurfDQCostFactor(const pcl::PointCloud<pcl::PointXY
            
         }
 
-    org_outputFile << "OK Surf: " << surf_num;
-    org_outputFile << "No Surf: " << no_plane;     
+    org_outputFile << "OK Surf: " << surf_num<<std::endl;
+    org_outputFile << "No Surf: " << no_plane<<std::endl;
 
        // else{
             //printf("puntos muy lejanos del plano");
@@ -731,7 +731,7 @@ void OdomEstimationClass::addSTDCostFactor(std::vector<STDesc> stdC_pair, std::v
         // std::cout<<"Error quat: "<<Vf(0)<<" "<<Vf(1)<<" "<<Vf(2)<<" "<<Vf(3)<<std::endl;
 
     } 
-    org_outputFile << "OK stds: " << stdC_pair.size();
+    org_outputFile << "OK stds: " << stdC_pair.size()<<std::endl;
 
 }
 

@@ -1,6 +1,6 @@
 # pre process
 # ds_size: 0.2 // hasta ahora el mejor
-ds_size: 0.1
+ds_size: 0.2
 maximum_corner_num: 10
 
 # # Original key points
@@ -51,7 +51,7 @@ icp_threshold: 0.4
 # window size
 max_window_size: 10
 kdtree_threshold: 10.0
-epsilon: 0.2
+epsilon: 0.001
 # # candidate search
 # skip_near_num: 20
 # candidate_num: 20
