@@ -51,7 +51,7 @@ icp_threshold: 0.4
 # window size
 max_window_size: 10
 kdtree_threshold: 10.0
-epsilon: 0.3
+epsilon: 0.2
 # # candidate search
 # skip_near_num: 20
 # candidate_num: 20
