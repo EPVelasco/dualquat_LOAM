@@ -334,11 +334,10 @@ void OdomEstimationClass::updatePointsToMap(const pcl::PointCloud<pcl::PointXYZ>
             ceres::Manifold *dq_manifold = new ceres::AutoDiffManifold<UDQManifold, 8, 6>;
             problem.AddParameterBlock(parameters, 8, dq_manifold);
             problem.SetManifold(parameters,dq_manifold);  
-            //std::cout << "edge " << std::endl;
+
+            // Parameterized Cost Functions in dual quaternions 
             addEdgeDQCostFactor(downsampledEdgeCloud,laserCloudCornerMap,problem,loss_function,dq_manifold,cropBox_len);
-            //std::cout << "surf " << std::endl;
             addSurfDQCostFactor(downsampledSurfCloud,laserCloudSurfMap,  problem,loss_function,dq_manifold,cropBox_len);
-            //std::cout << "std " << std::endl;
             addSTDCostFactor(stdC_pair, stdM_pair,  problem,loss_function,dq_manifold);
 
             ceres::Solver::Options options;
@@ -380,8 +379,7 @@ void OdomEstimationClass::updatePointsToMap(const pcl::PointCloud<pcl::PointXYZ>
     }else{
         printf("not enough points in map to associate, map error\n");
     }
-    
-    
+      
                   
     //Converitr los datos de quaternion dual a datos de q y t para enviar a odometria
     //Eigen::Matrix<double, 8, 1> dual_quat(parameters);
@@ -448,31 +446,20 @@ void OdomEstimationClass::downSamplingToMap(const pcl::PointCloud<pcl::PointXYZ>
 
 void OdomEstimationClass::addEdgeDQCostFactor(const pcl::PointCloud<pcl::PointXYZ>::Ptr& pc_in, const pcl::PointCloud<pcl::PointXYZ>::Ptr& map_in, ceres::Problem& problem, ceres::LossFunction *loss_function, ceres::Manifold* dq_manifold, double cropBox_len){
     int corner_num = 0  ;
-    int no_corner = 0 ;    
+    int no_corner  = 0 ;    
     int min_edges  = 5.0; 
     float dist     = 1.0;
     int nearK      = 5.0;
 
-    Eigen::Affine3d LocalTransformacion_line = Eigen::Affine3d::Identity();
+   // Eigen::Affine3d LocalTransformacion_line = Eigen::Affine3d::Identity();
     Eigen::Matrix<double,8,1> Local_line_Q;
     Local_line_Q<<1.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0;
-   // Eigen::Affine3d MapTransformacion_line = Eigen::Affine3d::Identity();;
 
-    pcl::PointCloud<pcl::PointXYZ>::Ptr pc_in_aux = pc_in; // aqui voy a guardar la nube de puntos de entrada para poder hacer el 
-    // proceso, y despues borrar los datos que ya correspondian a una linea. DE esta manera no se recorre toda la nube de puntos,
-    // ya que hacemos que los puntos que ya estan en una linea se borren. 
-    pc_in_aux = pc_in;
-    //int tam_pc =  (int)pc_in_aux->points.size();
+   // Eigen::Affine3d MapTransformacion_line = Eigen::Affine3d::Identity();
     for (int i = 0; i < (int)pc_in->points.size(); i++)
     {
          pcl::PointXYZ point_temp;
          pointAssociateToMap(&(pc_in->points[i]), &point_temp);
-
-// /////////////////// desde aqui hay que comentar para comparar con floam
-
-        
-     //   if(pc_in->points[i].x ==0 && pc_in->points[i].y == 0 && pc_in->points[i].z ==0)
-       //     continue;
 
         std::vector<int> pointSearchInd;
         std::vector<float> pointSearchSqDis;       
@@ -507,47 +494,35 @@ void OdomEstimationClass::addEdgeDQCostFactor(const pcl::PointCloud<pcl::PointXY
             {
 
                 ////////////////////// Factor linea optimzation
-
                 const auto& eigenvalues = saes.eigenvalues();
-                double maxEigenvalue = eigenvalues(2);  // Asumiendo que están ordenados
+                double maxEigenvalue = eigenvalues(2);  
                 double sumEigenvalues = eigenvalues.sum();
                 double factor_line = maxEigenvalue / sumEigenvalues;
-
-                //////////////////////////////////////////////////////////////////////7
+                //////////////////////////////////////////////////////////////////////
 
                 Eigen::Vector3d point_on_line = center;
                 Eigen::Vector3d point_a, point_b;
                 point_a = 0.1 * unit_direction + point_on_line;
                 point_b = -0.1 * unit_direction + point_on_line;
 
-                /////////////////////////////////////////////////////////////////////////////////
+                //////////////////////////////////////////////////////////////////////////
 
                 Eigen::Quaterniond cuaternion(1.0,0.0,0.0,0.0);
 
                 // Crear la traslación
                 Eigen::Matrix<double,3,1> punto_local_m(curr_point.x(),curr_point.y(),curr_point.z());
-
-                // std::cout<<"Punto Local: " <<punto_local_m.transpose()<<std::endl;
-                // std::cout<<"Punto a: " <<point_a.transpose()<<std::endl;
-                // std::cout<<"Punto b: " <<point_b.transpose()<<std::endl;
-
                 Local_line_Q = ToDQ_T(cuaternion,punto_local_m);
-
-
                 Eigen::Matrix<double,8,1> line_map = calculatePluckerLine (point_a,point_b);
 
-
-                ///////////////////////////////////////////////////////////////////////////////
-                // problem.AddParameterBlock(parameters, 8, dq_manifold);
+                //////////////////////////////////////////Cost Function///////////////
                 ceres::CostFunction *cost_function = new ceres::AutoDiffCostFunction<EdgeCostFunction, 1, 8>( new EdgeCostFunction(Local_line_Q, line_map, factor_line));
                 problem.AddResidualBlock(cost_function, loss_function, parameters); 
-                // problem.SetManifold(parameters,dq_manifold);       
+     
                 corner_num++;
             }
             else{
                 no_corner++;
-            }
-            
+            }            
         }
 
        
@@ -641,31 +616,19 @@ void OdomEstimationClass::addSurfDQCostFactor(const pcl::PointCloud<pcl::PointXY
                 new SurfCostFunction(Local_plane_Q, plane_Q,averageDistance));
                 problem.AddResidualBlock(cost_function, loss_function, parameters); 
                 // problem.SetManifold(parameters,dq_manifold);
-
                surf_num++;
-
-            //    /// print valores:
-            //    std::cout<<"Point Surf: "<<curr_surf_point<<std::endl;
-            //    std::cout<<"Point plane: "<<p<<std::endl;
-
             }
             else{
                 no_plane++;
             }
         }
                 if (surf_num == cropBox_len)
-                break;
-           
+                break;           
         }
 
     org_outputFile << "OK Surf: " << surf_num<<std::endl;
     org_outputFile << "No Surf: " << no_plane<<std::endl;
 
-       // else{
-            //printf("puntos muy lejanos del plano");
-       // }
-
-   // std::cout<<"Plano: "<<surf_num<<", No plano:"<<no_plane<<std::endl;
     if(surf_num<20){
         printf("not enough correct points to plane");
     }
@@ -674,14 +637,8 @@ void OdomEstimationClass::addSurfDQCostFactor(const pcl::PointCloud<pcl::PointXY
 
 void OdomEstimationClass::addSTDCostFactor(std::vector<STDesc> stdC_pair, std::vector<STDesc> stdM_pair, ceres::Problem& problem, ceres::LossFunction *loss_function, ceres::Manifold* dq_manifold)
 {
-
-    // std::cout<<"Ingrese a STD"<<std::endl;
-    // std::cout<<"tamanio: "<< stdC_pair.size()<<std::endl;
-
     // odoemtria calculada:
     Eigen::Matrix<double, 8, 1> dq_optimizado(dual_quat);
-    //dq_optimizado<< 1.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0;
-   
 
     for (size_t i = 0; i < stdC_pair.size(); ++i) {
 
@@ -704,32 +661,8 @@ void OdomEstimationClass::addSTDCostFactor(std::vector<STDesc> stdC_pair, std::v
         Eigen::Matrix<double,8,1> stdM_dq;
         stdM_dq = ToDQ_T(quatM,centerM);    
 
-        // std::cout<<"Mapa: "<<centerM.transpose()<<std::endl;
-        // std::cout<<"Curr: "<<centerC.transpose()<<std::endl;
-
-        // std::cout<<"Mapa xyz:  "<<get_translation(stdM_dq).transpose()<<std::endl;
-
-        // std::cout<<"Curr xyz:  "<<get_translation(stdC_dq).transpose()<<std::endl;
-        
-        // std::cout<<"Error xyz:  "<<get_translation(stdC_dq).transpose() - get_translation(stdM_dq).transpose()<<std::endl;
-
-
-
-        // std::cout<<"MapQ: "<<quatM.coeffs().transpose()<<std::endl;
-        // std::cout<<"CurQ: "<<quatC.coeffs().transpose()<<std::endl;
-
-
         ceres::CostFunction *cost_function = new ceres::AutoDiffCostFunction<STDCostFunction, 1, 8>(new STDCostFunction(stdC_dq, stdM_dq));
         problem.AddResidualBlock(cost_function, loss_function, parameters); 
-        // problem.SetManifold(parameters,dq_manifold);   
-
-        // /// Transformada
-
-        // Eigen::Matrix<double, 8, 1> Vf = dualquatMult(dualquatMult(dq_optimizado,stdC_dq),dq_conjugate(stdM_dq));
-        // // std::cout<<"Transformada: "<<Vf.transpose()<<std::endl;
-        // std::cout<<"Error xyz:  "<<get_translation(Vf).transpose()<<std::endl;
-        // std::cout<<"Error quat: "<<Vf(0)<<" "<<Vf(1)<<" "<<Vf(2)<<" "<<Vf(3)<<std::endl;
-
     } 
     org_outputFile << "OK stds: " << stdC_pair.size()<<std::endl;
 
@@ -737,13 +670,11 @@ void OdomEstimationClass::addSTDCostFactor(std::vector<STDesc> stdC_pair, std::v
 
 void OdomEstimationClass::addPointsToMap(const pcl::PointCloud<pcl::PointXYZ>::Ptr& downsampledEdgeCloud, const pcl::PointCloud<pcl::PointXYZ>::Ptr& downsampledSurfCloud, bool clear_map, double cropBox_len){
 
-
     if(clear_map){
         occlude_pcd(laserCloudCornerMap,50,0,0);
         laserCloudCornerMap->clear();
         occlude_pcd(laserCloudSurfMap,50,0,0);
         laserCloudSurfMap->clear();
-       
     }
 
     for (int i = 0; i < (int)downsampledEdgeCloud->points.size(); i++)
@@ -753,13 +684,11 @@ void OdomEstimationClass::addPointsToMap(const pcl::PointCloud<pcl::PointXYZ>::P
         laserCloudCornerMap->push_back(point_temp);
     }
 
-
     for (int j = 0; j < (int)downsampledSurfCloud->points.size(); j++)
     {
         pcl::PointXYZ point_temp;
         pointAssociateToMap(&downsampledSurfCloud->points[j], &point_temp);
         laserCloudSurfMap->push_back(point_temp);
-
     }
 
     int conti = laserCloudCornerMap->size();
@@ -791,15 +720,11 @@ void OdomEstimationClass::addPointsToMap(const pcl::PointCloud<pcl::PointXYZ>::P
     downSizeFilterEdge.setInputCloud(tmpCorner);
     downSizeFilterEdge.filter(*laserCloudCornerMap);
 }
-
-
-
 void OdomEstimationClass::occlude_pcd(pcl::PointCloud<pcl::PointXYZ>::Ptr & cld_ptr,int dim, double threshA, double threshB)
 {
     for(pcl::PointCloud<pcl::PointXYZ>::iterator it = cld_ptr->begin()+threshA;  it < cld_ptr->end()-threshB;it+=dim)
     {
-        cld_ptr->erase(it);
-
+       cld_ptr->erase(it);
      }
 }
 

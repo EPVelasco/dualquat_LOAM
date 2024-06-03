@@ -201,11 +201,7 @@ void publishLocalMap(const std::deque<STDesc>& std_local_map, visualization_msgs
     for (const auto& desc : std_local_map) {
         temp_vector.push_back(desc);
     }
-    // std::cout << "publishLocalMap**********: " << std_local_map.size() << std::endl;
-    // std::cout << "temp_vector " << temp_vector.size() << std::endl;
-
-
-    
+   
     convertToMarkers(temp_vector, marker_array, color, alpha,0.06);
 }
 
@@ -259,10 +255,10 @@ float calcularDistancia(const Eigen::Vector3f &v1, const Eigen::Vector3f &v2) {
 }
 
 void extractVerticesToMatrix(const std::deque<STDesc>& std_local_map, Eigen::MatrixXf& all_vertices) {
-    const int num_desc = std_local_map.size();
+    int num_desc = std_local_map.size();
     all_vertices.resize(3 * num_desc, 3); // 3 filas por descriptor, cada una con 3 coordenadas
 
-    for (size_t i = 0; i < num_desc; ++i) {
+    for (int i = 0; i < num_desc; ++i) {
         all_vertices.row(3 * i) = std_local_map[i].vertex_A_.transpose().cast<float>();   // vertex_A
         all_vertices.row(3 * i + 1) = std_local_map[i].vertex_B_.transpose().cast<float>(); // vertex_B
         all_vertices.row(3 * i + 2) = std_local_map[i].vertex_C_.transpose().cast<float>(); // vertex_C
@@ -373,23 +369,7 @@ Eigen::MatrixXf promediarVertices(const Eigen::MatrixXf &vertices, const std::ve
 }
 
 void updateMatrixAndKDTreeWithFiltering(Eigen::MatrixXf& mat, std::unique_ptr<nanoflann::KDTreeEigenMatrixAdaptor<Eigen::MatrixXf>>& index, std::deque<STDesc>& std_local_map,  ConfigSetting config_setting) {
-//    std::cout << "Tamaño de std_local_map: " << std_local_map.size() << std::endl;
-//    std::cout << "Tamaño de  a mat: " << mat.size()/24 << std::endl;
-
-
     int num_desc = std_local_map.size();
-
-
-    // mat.resize(num_desc, 24);
-
-    // for (size_t i = 0; i < std_local_map.size(); ++i) {
-    //     addDescriptorToMatrix(mat, std_local_map[i], i);
-    // }
-
-    
- //   std::cout << "Tamaño de std_local_map a mat: " << mat.size()/24 << std::endl;
-
- 
 
     /////////////////// Filtrado de vértices
     Eigen::MatrixXf all_vertices;
@@ -399,11 +379,6 @@ void updateMatrixAndKDTreeWithFiltering(Eigen::MatrixXf& mat, std::unique_ptr<na
      std::vector<int> vertex_labels;
     cluster_vertx(all_vertices, vertex_labels, config_setting.epsilon_);
 
-    // std::cout << "Labels después de la agrupación:" << std::endl;
-    // for (int label : vertex_labels) {
-    //     std::cout << label << " ";
-    // }
-    // std::cout << std::endl;
 
     Eigen::MatrixXf new_vertices = promediarVertices(all_vertices, vertex_labels);
 
@@ -446,10 +421,7 @@ void updateMatrixAndKDTreeWithFiltering(Eigen::MatrixXf& mat, std::unique_ptr<na
     // Actualizar la matriz y el KD-Tree con los descriptores filtrados y fusionados
     num_desc = std_local_map.size();
     mat.resize(num_desc, 24);
-
     
-    // std::cout << "Tamaño de  a mat: " << mat.size()/24 << std::endl;
-
     for (size_t i = 0; i < std_local_map.size(); ++i) {
         addDescriptorToMatrix(mat, std_local_map[i], i); // aqui se añaden ya los descritproes filtrados al mapa STD_local
 
@@ -459,7 +431,6 @@ void updateMatrixAndKDTreeWithFiltering(Eigen::MatrixXf& mat, std::unique_ptr<na
     index = std::make_unique<nanoflann::KDTreeEigenMatrixAdaptor<Eigen::MatrixXf>>(24, std::cref(mat), 10 /* max leaf */);
     index->index_->buildIndex();
 }
-
 
 #endif // _STD_FUNCTIONS_H_
 

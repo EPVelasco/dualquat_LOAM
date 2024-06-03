@@ -1,4 +1,4 @@
-// Author of LiDAR-Odometry_DQ: Edison Velasco
+// Author of dualquat_loam: Edison Velasco
 // Email edison.velasco@ua.es
 
 //c++ lib
@@ -37,10 +37,6 @@
 // NanoFlann library for kdtree
 #include <nanoflann.hpp>
 
-// ///// synchronizer topics
-// #include <message_filters/subscriber.h>
-// #include <message_filters/synchronizer.h>
-// #include <message_filters/sync_policies/approximate_time.h>
 
 typedef pcl::PointXYZI PointType;  // only for std
 typedef pcl::PointCloud<PointType> pcSTD;
@@ -68,13 +64,11 @@ ros::Publisher pubLaserOdometry;
 ros::Publisher pubOdometryDiff;
 
 /// STD publishers
-ros::Publisher pose_pub_prev ;
-ros::Publisher pose_pub_curr;
 ros::Publisher pubSTD ;
 ros::Publisher cloud_pub;
 
-ros::Publisher std_pub_Map;
-ros::Publisher std_pub_Cur;
+// ros::Publisher std_pub_Map;
+// ros::Publisher std_pub_Cur;
 
 
 ros::Publisher time_average;
@@ -111,7 +105,7 @@ bool readPC(pcSTD::Ptr &cloud) {
         return false;
 
     auto laser_msg = laser_buffer.front();
-    double laser_timestamp = laser_msg->header.stamp.toSec();
+    //double laser_timestamp = laser_msg->header.stamp.toSec();
     pcl::fromROSMsg(*laser_msg, *cloud);
     std::unique_lock<std::mutex> l_lock(laser_mtx);
     laser_buffer.pop();
@@ -123,7 +117,7 @@ Eigen::Matrix4d imu_to_cam = Eigen::Matrix4d::Identity();
 Eigen::Matrix4d imu_to_velo = Eigen::Matrix4d::Identity();
 Eigen::Matrix4d velo_to_cam = Eigen::Matrix4d::Identity();
 
-void loadCalib_kitti(std::string path_calib){
+/*void loadCalib_kitti(std::string path_calib){
 
 // Definir variables para almacenar los valores
     std::string calib_time;
@@ -174,63 +168,14 @@ void loadCalib_kitti(std::string path_calib){
     velo_to_cam.block<3, 3>(0, 0) = q.toRotationMatrix();
     Eigen::Vector3d T2 (0,0,0);
     velo_to_cam.block<3, 1>(0, 3) = T2;
-}
-void tfCallback(const tf2_msgs::TFMessage::ConstPtr& msg) {
-    // Iterar sobre todas las transformaciones en el mensaje TF
-    for (const auto& transform : msg->transforms) {
-
-
-        if(transform.child_frame_id == "camera_color_left"){
-
-            Eigen::Quaterniond q;
-
-            q.x()=transform.transform.rotation.x;
-            q.y()=transform.transform.rotation.y;
-            q.z()=transform.transform.rotation.z;            
-            q.w()=transform.transform.rotation.w;
-
-            Eigen::Vector3d t;            
-
-            t.x() = transform.transform.translation.x;
-            t.y() = transform.transform.translation.y;
-            t.z() = transform.transform.translation.z;     
-
-
-            imu_to_cam.block<3, 3>(0, 0) = q.toRotationMatrix();;
-            imu_to_cam.block<3, 1>(0, 3) = t;
-
-
-        }
-
-        if(transform.child_frame_id == "velo_link"){
-
-            Eigen::Quaterniond q;
-
-            q.x()=transform.transform.rotation.x;
-            q.y()=transform.transform.rotation.y;
-            q.z()=transform.transform.rotation.z;
-            q.w()=transform.transform.rotation.w;
-
-            Eigen::Vector3d t;            
-
-            t.x() = transform.transform.translation.x;
-            t.y() = transform.transform.translation.y;
-            t.z() = transform.transform.translation.z;
-
-            imu_to_velo.block<3, 3>(0, 0) = q.toRotationMatrix();;
-            imu_to_velo.block<3, 1>(0, 3) = t;
-
-
-            }
-    }
-}
+}*/
 
 void STD_matching(std::vector<STDesc>& stds_curr_body, std::vector<STDesc>& stds_curr_world, std::deque<STDesc>&  std_local_map,
                   std::vector<STDesc>& stdC_pair, std::vector<STDesc>& stdM_pair,
                   std::unique_ptr<nanoflann::KDTreeEigenMatrixAdaptor<Eigen::MatrixXf>>& index, ros::Publisher pubSTD){
 
     int cont_desc_pairs= 0;
-    int id = 0;
+    //int id = 0;
     visualization_msgs::MarkerArray marker_array;
 
     for (size_t i = 0; i < stds_curr_world.size(); ++i) {
@@ -240,7 +185,7 @@ void STD_matching(std::vector<STDesc>& stds_curr_body, std::vector<STDesc>& stds
 
         std::vector<float> query;
         Eigen::Vector3f side_length = descC_W.side_length_.cast<float>();
-        Eigen::Vector3f angle = descC_W.angle_.cast<float>();
+        //Eigen::Vector3f angle = descC_W.angle_.cast<float>();
         Eigen::Vector3f center = descC_W.center_.cast<float>();
         Eigen::Vector3f vertex_A = descC_W.vertex_A_.cast<float>();
         Eigen::Vector3f vertex_B = descC_W.vertex_B_.cast<float>();
@@ -248,7 +193,7 @@ void STD_matching(std::vector<STDesc>& stds_curr_body, std::vector<STDesc>& stds
         Eigen::Vector3f norms1 = descC_W.normal1_.cast<float>();
         Eigen::Vector3f norms2 = descC_W.normal2_.cast<float>();
         Eigen::Vector3f norms3 = descC_W.normal3_.cast<float>();
-        Eigen::Matrix3d axes_f = descC_W.calculateReferenceFrame();
+        //Eigen::Matrix3d axes_f = descC_W.calculateReferenceFrame();
 
 
         query.insert(query.end(), side_length.data(), side_length.data() + 3);
@@ -262,7 +207,7 @@ void STD_matching(std::vector<STDesc>& stds_curr_body, std::vector<STDesc>& stds
         query.insert(query.end(), norms3.data(), norms3.data() + 3);
         //query.insert(query.end(), axes_f.data(), axes_f.data() + axes_f.size());
 
-        // Buscar el descriptor más cercano
+        // Find the near STD with nanoflann 
         const size_t num_results = 1;
         std::vector<size_t> ret_indexes(num_results);
         std::vector<float> out_dists_sqr(num_results);
@@ -275,6 +220,8 @@ void STD_matching(std::vector<STDesc>& stds_curr_body, std::vector<STDesc>& stds
             
             if (ret_indexes[i] < std_local_map.size() && out_dists_sqr[i] < config_setting.kdtree_threshold_) {
                 cont_desc_pairs++;
+
+                // function to draw STD arrows
                 //generateArrow(descC_W, std_local_map[ret_indexes[i]], marker_array, id, msg_point->header);
 
                 stdM_pair.push_back(std_local_map[ret_indexes[i]]);
@@ -287,7 +234,7 @@ void STD_matching(std::vector<STDesc>& stds_curr_body, std::vector<STDesc>& stds
     //Number of matchs
     std::cout<<"Number of STD matchs: "<<cont_desc_pairs<<std::endl;
 
-    // Publicar las flechas en RViz
+    // Publish the arrows in rviz
     pubSTD.publish(marker_array);
     visualization_msgs::Marker delete_marker_curr;
     delete_marker_curr.action = visualization_msgs::Marker::DELETEALL;
@@ -336,19 +283,6 @@ void odom_estimation(){
     ////////////Saveing data initialization
 
     outputFile << std::scientific;
-    // outputFile <<  1.0 <<" "
-    //            <<  0.0 <<" "
-    //            <<  0.0 <<" "
-    //            <<  0.0 <<" "
-    //            <<  0.0 <<" "
-    //            <<  1.0 <<" "
-    //            <<  0.0 <<" "
-    //            <<  0.0 <<" "
-    //            <<  0.0 <<" "
-    //            <<  0.0 <<" "
-    //            <<  1.0 <<" "
-    //            <<  0.0 << std::endl; 
-
    
     Eigen::Isometry3d odom = Eigen::Isometry3d::Identity();
 
@@ -381,38 +315,26 @@ void odom_estimation(){
                 down_sampling_voxel(*current_cloud, config_setting.ds_size_);                
             }
 
-            mutex_lock.unlock();
-
-          
+            mutex_lock.unlock();          
 
             if(is_odom_inited == false){
-                // extract std for the initial frame K=0
-               // std_local_map.insert(std_local_map.end(), stds_curr.begin(), stds_curr.end());
-
                 odomEstimation.initMapWithPoints(pointcloud_edge_in, pointcloud_surf_in);
                 is_odom_inited = true;
                 ROS_INFO("odom inited");
 
             }else{
 
-                    //////////////////////////////// STD extractor
+                //////////////////////////////// STD extractor
                 poseSTD = odom_prev;
                 pcl::transformPointCloud(*current_cloud, *current_cloud_world, poseSTD);
                 std_manager->GenerateSTDescs(current_cloud_world, stds_curr_w);
                 std_manager->GenerateSTDescs(current_cloud, stds_curr_body);
                 ////////////////////////////////////////////////////////////////////////////
 
-
-
-
                 ////////////////////////////////////////////// STD matching
                 STD_matching(stds_curr_body, stds_curr_w, std_local_map, stdC_pair, stdM_pair, index, pubSTD);
-
                 //////////////////////////////////////////////////////////////////////////////////
-
                 odomEstimation.updatePointsToMap(pointcloud_edge_in, pointcloud_surf_in, stdC_pair, stdM_pair, clear_map, cropBox_len);
-
-
             }
 
 
@@ -455,8 +377,6 @@ void odom_estimation(){
             ///////////////////////////////////////////////////////
             ///////////////////////////////////////////////////////
 
-            /////kitti
-
             static tf::TransformBroadcaster br;
             tf::Transform transform;
             transform.setOrigin( tf::Vector3(t_current.x(), t_current.y(), t_current.z()) );
@@ -494,7 +414,7 @@ void odom_estimation(){
 
                     ///////////////////// cropping elements per window in std_local_map ///////////////
             counts_per_iteration.push_back(stds_curr_w.size());
-            while (counts_per_iteration.size() > config_setting.max_window_size_) {
+            while (int(counts_per_iteration.size()) > config_setting.max_window_size_) {
                 int count_to_remove = counts_per_iteration.front();
                 counts_per_iteration.pop_front();
                 for (int i = 0; i < count_to_remove; ++i) {
@@ -524,7 +444,7 @@ void odom_estimation(){
              
             // publish odometry
             nav_msgs::Odometry laserOdometry;
-            laserOdometry.header.frame_id = "odom_dq";
+            laserOdometry.header.frame_id = "odom";
             laserOdometry.child_frame_id = childframeID;
             laserOdometry.header.stamp = pointcloud_time;
             laserOdometry.pose.pose.orientation.x = q_current.x();
@@ -536,7 +456,7 @@ void odom_estimation(){
             laserOdometry.pose.pose.position.z = t_current.z();
 
             nav_msgs::Odometry odomDiff;
-            odomDiff.header.frame_id = "odom_dq";
+            odomDiff.header.frame_id = "odom";
             odomDiff.child_frame_id = childframeID;
             odomDiff.header.stamp = pointcloud_time;
             odomDiff.pose.pose.orientation.x = q_diff.x();
@@ -574,7 +494,7 @@ void odom_estimation(){
             // publish map:
              sensor_msgs::PointCloud2 output_cloud;
             pcl::toROSMsg(*current_cloud_world, output_cloud);
-            output_cloud.header.frame_id = "map";  // O el frame_id que desees
+            output_cloud.header.frame_id = "map";  
             cloud_pub.publish(output_cloud);
 
 
@@ -614,33 +534,27 @@ int main(int argc, char **argv)
     nh.getParam("/childframeID",childframeID);
     nh.getParam("/pcl_edge",edge_pcl);
     nh.getParam("/pcl_surf",surf_pcl);
-    nh.getParam("/pcTopic",pcTopic);
-    
-        
+    nh.getParam("/pcTopic",pcTopic);        
     nh.getParam("/path_odom",path_odom);    
     nh.getParam("/path_calib",path_calib);
 
-    loadCalib_kitti(path_calib); // cargar los datos de calibracion de Kitti
+    //loadCalib_kitti(path_calib); // cargar los datos de calibracion de Kitti
     
-
-
     odomEstimation.init(edge_resolution, surf_resolution);
     
     ros::Subscriber subEdgeLaserCloud = nh.subscribe<sensor_msgs::PointCloud2>(edge_pcl, 100, velodyneEdgeHandler);
     ros::Subscriber subSurfLaserCloud = nh.subscribe<sensor_msgs::PointCloud2>(surf_pcl, 100, velodyneSurfHandler);
     ros::Subscriber subLaserCloud = nh.subscribe<sensor_msgs::PointCloud2>(pcTopic, 100, laserCloudHandler);
 
-
     pubLaserOdometry = nh.advertise<nav_msgs::Odometry>("/odom_dq", 100);
     pubOdometryDiff = nh.advertise<nav_msgs::Odometry>("/odom_diff", 100);
     time_average = nh.advertise<std_msgs::Float64>("/time_average", 100);
-    pose_pub_prev = nh.advertise<geometry_msgs::PoseArray>("std_prev_poses", 10);
-    pose_pub_curr = nh.advertise<geometry_msgs::PoseArray>("std_curr_poses", 10);
     pubSTD = nh.advertise<visualization_msgs::MarkerArray>("pair_std", 10);
     cloud_pub = nh.advertise<sensor_msgs::PointCloud2>("output_cloud", 10);
 
-    std_pub_Map = nh.advertise<geometry_msgs::PoseArray>("std_prev_poses", 10);
-    std_pub_Cur = nh.advertise<geometry_msgs::PoseArray>("std_curr_poses", 10);
+    // topics to show the pose of each STD descriptor
+    // std_pub_Map = nh.advertise<geometry_msgs::PoseArray>("std_prev_poses", 10);
+    // std_pub_Cur = nh.advertise<geometry_msgs::PoseArray>("std_curr_poses", 10);
 
 
     std::thread odom_estimation_process{odom_estimation};
