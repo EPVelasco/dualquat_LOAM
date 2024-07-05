@@ -132,7 +132,9 @@ struct STDCostFunction {
 
         Eigen::Matrix<T, 8, 1> Vf = dualquatMult(dq_conjugate(Q_M),dualquatMult(Q_C,Q_opti));
         Eigen::Matrix<T, 8, 1> Vf_abs = Vf;
-        Vf_abs[0] = abs(Vf_abs[0]);
+        if (Vf[0]<T(0.0))
+            Vf_abs = -Vf;
+        //Vf_abs[0] = abs(Vf_abs[0]);
 
         Eigen::Matrix<T, 8, 1> dq_unit;
         dq_unit<<T(1.0),T(0.0),T(0.0),T(0.0),T(0.0),T(0.0),T(0.0),T(0.0);
