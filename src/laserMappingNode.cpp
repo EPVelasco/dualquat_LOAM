@@ -106,10 +106,10 @@ int main(int argc, char **argv)
     ros::init(argc, argv, "main");
     ros::NodeHandle nh;
 
-    double scan_period= 0.1;
-    double max_dis = 60.0;
+    double scan_period= 0.2;
+    double max_dis = 100.0;
     double min_dis = 2.0;
-    double map_resolution = 0.4;
+    double map_resolution = 0.2;
 
     nh.getParam("/scan_period", scan_period);
     nh.getParam("/max_dis", max_dis);
