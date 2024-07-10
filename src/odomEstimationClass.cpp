@@ -348,7 +348,7 @@ void OdomEstimationClass::updatePointsToMap(const pcl::PointCloud<pcl::PointXYZ>
             options.gradient_check_relative_precision = 1e-6;
             options.minimizer_progress_to_stdout = true;
             options.check_gradients = false;
-            options.num_threads = 20;
+            options.num_threads = 10;
 
 
             // Redirige la salida estándar al archivo

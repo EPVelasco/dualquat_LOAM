@@ -285,9 +285,11 @@ void odom_estimation(){
     outputFile << std::scientific;
    
     Eigen::Isometry3d odom = Eigen::Isometry3d::Identity();
+    
+    int cont=0;
 
     while(1){
-
+        
         std::chrono::time_point<std::chrono::system_clock> start, end;
         start = std::chrono::system_clock::now();
 
@@ -490,12 +492,17 @@ void odom_estimation(){
             time_msg.data = time_delay*1000.0;
             time_average.publish(time_msg);
 
-
             // publish map:
-             sensor_msgs::PointCloud2 output_cloud;
+            sensor_msgs::PointCloud2 output_cloud;
             pcl::toROSMsg(*current_cloud_world, output_cloud);
             output_cloud.header.frame_id = "map";  
-            cloud_pub.publish(output_cloud);
+
+            
+            if(cont>30){
+                cont = 0;
+                cloud_pub.publish(output_cloud);
+            }
+            cont++;
 
 
          }
