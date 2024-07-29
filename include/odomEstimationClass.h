@@ -53,7 +53,7 @@ class OdomEstimationClass
         void init(double edge_resolution,double surf_resolution);
 		void initMapWithPoints(const pcl::PointCloud<pcl::PointXYZ>::Ptr& edge_in, const pcl::PointCloud<pcl::PointXYZ>::Ptr& surf_in);
         void updatePointsToMap(const pcl::PointCloud<pcl::PointXYZ>::Ptr& edge_in, const pcl::PointCloud<pcl::PointXYZ>::Ptr& surf_in,
-		                       const std::vector<STDesc>& stdC_pair, const std::vector<STDesc>& stdM_pair,  bool clear_map ,double cropBox_len);
+		                       const std::vector<STDesc>& stdC_pair, const std::vector<STDesc>& stdM_pair,  bool clear_map ,double cropBox_len, double cont_opti);
 		void getMap(pcl::PointCloud<pcl::PointXYZ>::Ptr& laserCloudMap);
 
 		Eigen::Isometry3d odom;

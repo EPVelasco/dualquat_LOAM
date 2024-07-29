@@ -29,8 +29,7 @@ if(CMAKE_SYSTEM_PROCESSOR MATCHES "(x86)|(X86)|(amd64)|(AMD64)" )
 else()
   add_definitions(-DMP_PROC_NUM=1)
 endif()
-# Find nanoflannConfig.cmake:
-find_package(nanoflann)
+
 
 find_package(catkin REQUIRED COMPONENTS
   eigen_conversions
@@ -47,7 +46,9 @@ find_package(catkin REQUIRED COMPONENTS
   tf_conversions
   
 )
-
+# Find nanoflannConfig.cmake:
+find_package(nanoflann)
+include_directories(/home/ws/src/nanoflann)
 
 include_directories( "/usr/include/dqrobotics" )
 

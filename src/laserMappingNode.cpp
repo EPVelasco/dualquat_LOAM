@@ -106,7 +106,7 @@ int main(int argc, char **argv)
     ros::init(argc, argv, "main");
     ros::NodeHandle nh;
 
-    double scan_period= 0.2;
+    double scan_period= 0.5;
     double max_dis = 100.0;
     double min_dis = 2.0;
     double map_resolution = 0.2;
@@ -119,7 +119,7 @@ int main(int argc, char **argv)
 
 
     laserMapping.init(map_resolution);
-    ros::Subscriber subLaserCloud = nh.subscribe<sensor_msgs::PointCloud2>("/lidar_filtered", 100, velodyneHandler);
+    ros::Subscriber subLaserCloud = nh.subscribe<sensor_msgs::PointCloud2>("/ouster/points", 100, velodyneHandler);
     ros::Subscriber subOdometry = nh.subscribe<nav_msgs::Odometry>("/odom_dq", 100, odomCallback);
 
     map_pub = nh.advertise<sensor_msgs::PointCloud2>("/map", 100);

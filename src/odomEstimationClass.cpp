@@ -278,9 +278,9 @@ void OdomEstimationClass::initMapWithPoints(const pcl::PointCloud<pcl::PointXYZ>
 }
 
 void OdomEstimationClass::updatePointsToMap(const pcl::PointCloud<pcl::PointXYZ>::Ptr& edge_in, const pcl::PointCloud<pcl::PointXYZ>::Ptr& surf_in, 
-                                            const std::vector<STDesc>& stdC_pair, const std::vector<STDesc>& stdM_pair,  bool clear_map, double cropBox_len){
+                                            const std::vector<STDesc>& stdC_pair, const std::vector<STDesc>& stdM_pair,  bool clear_map, double cropBox_len, double cont_opti){
 
-    if(optimization_count>1)
+    if(optimization_count>cont_opti)
         optimization_count--;
 
     Eigen::Isometry3d odom_prediction = odom * (last_odom.inverse() * odom);
@@ -328,8 +328,8 @@ void OdomEstimationClass::updatePointsToMap(const pcl::PointCloud<pcl::PointXYZ>
         kdtreeSurfMap->setInputCloud(laserCloudSurfMap);
       
         for (int iterCount = 0; iterCount < optimization_count; iterCount++){
-            float loss_value = 0.1;
-            ceres::LossFunction *loss_function = new ceres::SoftLOneLoss(loss_value); //  ceres::SoftLOneLoss(loss_value);
+            float loss_value = 0.25;
+            ceres::LossFunction *loss_function = new ceres::HuberLoss(loss_value); //  ceres::SoftLOneLoss(loss_value);
             ceres::Problem::Options problem_options;
             ceres::Problem problem(problem_options);
 
@@ -345,7 +345,7 @@ void OdomEstimationClass::updatePointsToMap(const pcl::PointCloud<pcl::PointXYZ>
             ceres::Solver::Options options;
             options.linear_solver_type = ceres::DENSE_QR;
             options.max_num_iterations = 100;
-            options.gradient_check_relative_precision = 1e-6;
+            options.gradient_check_relative_precision = 1e-4;
             options.minimizer_progress_to_stdout = true;
             options.check_gradients = false;
             options.num_threads = 10;

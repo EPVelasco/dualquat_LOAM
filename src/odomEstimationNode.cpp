@@ -117,6 +117,8 @@ Eigen::Matrix4d imu_to_cam = Eigen::Matrix4d::Identity();
 Eigen::Matrix4d imu_to_velo = Eigen::Matrix4d::Identity();
 Eigen::Matrix4d velo_to_cam = Eigen::Matrix4d::Identity();
 
+int cont_map = 0;
+
 /*void loadCalib_kitti(std::string path_calib){
 
 // Definir variables para almacenar los valores
@@ -245,7 +247,7 @@ void STD_matching(std::vector<STDesc>& stds_curr_body, std::vector<STDesc>& stds
 
 
 bool is_odom_inited = false;
-double total_time =0, cropBox_len, surf_limit;
+double total_time =0, cropBox_len, surf_limit, cont_opti;
 int total_frame=0;
 bool clear_map;
 
@@ -264,7 +266,9 @@ void odom_estimation(){
 
     pcSTD::Ptr current_cloud(new pcSTD); // pointcloud of the original sensor. It is used to std extractor
     pcSTD::Ptr current_cloud_world(new pcSTD); // pointcloud of the original sensor. It is used to std extractor
-    Eigen::MatrixXf mat(0, 24);
+    // pcl::PointCloud<pcl::PointXYZI>::Ptr orig_cloud(new pcl::PointCloud<pcl::PointXYZI>()); // point cloud for output visualization
+
+    Eigen::MatrixXf mat(0, 24);   // matrix for elements en nanoflann
     std::unique_ptr<nanoflann::KDTreeEigenMatrixAdaptor<Eigen::MatrixXf>> index;
     Eigen::Affine3d poseSTD = Eigen::Affine3d::Identity();
     std::deque<int> counts_per_iteration; // use for the cropping data of std_local_map
@@ -286,8 +290,8 @@ void odom_estimation(){
    
     Eigen::Isometry3d odom = Eigen::Isometry3d::Identity();
     
-    int cont=0;
-
+    
+    int cont=0; // cont for map
     while(1){
         
         std::chrono::time_point<std::chrono::system_clock> start, end;
@@ -314,6 +318,8 @@ void odom_estimation(){
 
             ////////////// read original pc to extract STD 
             if (readPC(current_cloud)){
+                // *orig_cloud=*current_cloud;
+                // down_sampling_voxel(*orig_cloud,0.1);
                 down_sampling_voxel(*current_cloud, config_setting.ds_size_);                
             }
 
@@ -336,7 +342,7 @@ void odom_estimation(){
                 ////////////////////////////////////////////// STD matching
                 STD_matching(stds_curr_body, stds_curr_w, std_local_map, stdC_pair, stdM_pair, index, pubSTD);
                 //////////////////////////////////////////////////////////////////////////////////
-                odomEstimation.updatePointsToMap(pointcloud_edge_in, pointcloud_surf_in, stdC_pair, stdM_pair, clear_map, cropBox_len);
+                odomEstimation.updatePointsToMap(pointcloud_edge_in, pointcloud_surf_in, stdC_pair, stdM_pair, clear_map, cropBox_len, cont_opti);
             }
 
 
@@ -369,14 +375,14 @@ void odom_estimation(){
             }
 
             ///////////////////////////////////////////////////////
-            // Project to 2D!!!
+            //Project to 2D!!!
             // t_current.z() = 0.0;
             // double siny_cosp = 2 * (q_current.w() * q_current.z() + q_current.x() * q_current.y());
             // double cosy_cosp = 1 - 2 * (q_current.y() * q_current.y() + q_current.z() * q_current.z());
             // double yaw = std::atan2(siny_cosp, cosy_cosp);
             // Eigen::AngleAxisd yaw_angle(yaw, Eigen::Vector3d::UnitZ());
             // q_current = yaw_angle;
-            ///////////////////////////////////////////////////////
+            // ///////////////////////////////////////////////////////
             ///////////////////////////////////////////////////////
 
             static tf::TransformBroadcaster br;
@@ -443,6 +449,13 @@ void odom_estimation(){
 
             //////////////////////////////////////////////////////////////////////////////
 
+            ///////////// original point cloud to map (only for visual representation)
+            // pcl::PointCloud<pcl::PointXYZI>::Ptr orig_cloud_world(new pcl::PointCloud<pcl::PointXYZI>());
+
+            // pcl::transformPointCloud(*orig_cloud, *orig_cloud_world, pose_estimated);
+
+            /////////////////////////////////////////77
+
              
             // publish odometry
             nav_msgs::Odometry laserOdometry;
@@ -498,7 +511,8 @@ void odom_estimation(){
             output_cloud.header.frame_id = "map";  
 
             
-            if(cont>30){
+            // if(cont>cont_map){
+            if(true){
                 cont = 0;
                 cloud_pub.publish(output_cloud);
             }
@@ -530,6 +544,7 @@ int main(int argc, char **argv)
 
     clear_map = true;
     cropBox_len = 10000;
+    cont_opti =  2; // 2 for robot Blue, 1 for KITTI
 
     nh.getParam("/max_dis", max_dis);
     nh.getParam("/min_dis", min_dis);
@@ -538,12 +553,14 @@ int main(int argc, char **argv)
     nh.getParam("/clear_map", clear_map);
     nh.getParam("/save_data", save_data);    
     nh.getParam("/cropBox_len", cropBox_len);
+    nh.getParam("/cont_opti", cont_opti);    
     nh.getParam("/childframeID",childframeID);
     nh.getParam("/pcl_edge",edge_pcl);
     nh.getParam("/pcl_surf",surf_pcl);
     nh.getParam("/pcTopic",pcTopic);        
     nh.getParam("/path_odom",path_odom);    
     nh.getParam("/path_calib",path_calib);
+    nh.getParam("/cont_for_map",cont_map);
 
     //loadCalib_kitti(path_calib); // cargar los datos de calibracion de Kitti
     

@@ -8,8 +8,8 @@
     <rosparam command="load" file="$(find dualquat_loam)/config/config_frame_frame.yaml" />
 
     <!-- Hyperparameters -->
-    <param name="edge_resolution" type="double" value="0.5" />
-    <param name="surf_resolution" type="double" value="0.5" />
+    <param name="edge_resolution" type="double" value="0.4" />
+    <param name="surf_resolution" type="double" value="0.4" />
     <param name="velodyne_height" type="double" value="-20" />
     <param name="validation_height" type="bool" value="false" />
 
@@ -25,6 +25,8 @@
     <param name="/pcl_surf" type="str" value="/laser_cloud_surf" /> -->
     <param name="/childframeID" type="str" value="velodyne" /> 
     <param name="cropBox_len" type="double" value="800" /> 
+    <param name="/cont_opti" type="double" value="1.0" />
+
 
         <!-- <node pkg="tf" type="static_transform_publisher" name="word2map_tf"  args="0.0 -0.32 1.73 -1.6 0.05 0 /world /map 10" />
         <node pkg="tf" type="static_transform_publisher" name="word2map_tf"  args="0.0 -0.32 1.73 1.05 0 0 /world /map 10" />
