@@ -250,6 +250,7 @@ bool is_odom_inited = false;
 double total_time =0, cropBox_len, surf_limit, cont_opti;
 int total_frame=0;
 bool clear_map;
+double voxel_cloud_world = 0.5;
 
 void odom_estimation(){
 
@@ -319,7 +320,7 @@ void odom_estimation(){
             ////////////// read original pc to extract STD 
             if (readPC(current_cloud)){
                 // *orig_cloud=*current_cloud;
-                // down_sampling_voxel(*orig_cloud,0.1);
+                // down_sampling_voxel(*orig_cloud,voxel_cloud_world);
                 down_sampling_voxel(*current_cloud, config_setting.ds_size_);                
             }
 
@@ -451,7 +452,6 @@ void odom_estimation(){
 
             ///////////// original point cloud to map (only for visual representation)
             // pcl::PointCloud<pcl::PointXYZI>::Ptr orig_cloud_world(new pcl::PointCloud<pcl::PointXYZI>());
-
             // pcl::transformPointCloud(*orig_cloud, *orig_cloud_world, pose_estimated);
 
             /////////////////////////////////////////77
@@ -511,8 +511,8 @@ void odom_estimation(){
             output_cloud.header.frame_id = "map";  
 
             
-            // if(cont>cont_map){
-            if(true){
+            if(cont>cont_map){
+            //if(true){
                 cont = 0;
                 cloud_pub.publish(output_cloud);
             }
@@ -521,7 +521,7 @@ void odom_estimation(){
 
          }
 
-        std::chrono::milliseconds dura(2);
+        std::chrono::milliseconds dura(1);
         std::this_thread::sleep_for(dura);
     }
     if (save_data)
@@ -561,6 +561,8 @@ int main(int argc, char **argv)
     nh.getParam("/path_odom",path_odom);    
     nh.getParam("/path_calib",path_calib);
     nh.getParam("/cont_for_map",cont_map);
+    nh.getParam("/voxel_cloud_world",voxel_cloud_world);
+    
 
     //loadCalib_kitti(path_calib); // cargar los datos de calibracion de Kitti
     
