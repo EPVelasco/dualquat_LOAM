@@ -50,7 +50,7 @@
     </node>  -->
 
     <param name="save_data" type="bool" value="true" />    
-    <param name="/path_odom"                 type="str" value="/home/ws/src/parque_cientifico/loop_01.txt" /> 
+    <param name="/path_odom"                 type="str" value="/home/ws/src/parque_cientifico/loop_06.txt" /> 
     <param name="/path_calib" type="str" value="/home/lo-udq/catkin_ws/src/odom_estimation_pc/gt_kitti/calib_velo_camera/00.txt" />
    
     <node pkg="tf" type="static_transform_publisher" name="word2odom_tf"  args="0 0 0 0 0 0 /map /odom 10" />
