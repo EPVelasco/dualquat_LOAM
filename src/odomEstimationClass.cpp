@@ -13,7 +13,7 @@
 
 using namespace DQ_robotics;
 
-std::string path_estadistic = "/home/ws/src/resultados_dualquat_loam/estadisticas.txt";
+std::string path_estadistic = "/home/ws/src/parque_cientifico/estadisticas.txt";
 std::ofstream org_outputFile(path_estadistic);   
 
 struct EdgeCostFunction {
@@ -328,7 +328,7 @@ void OdomEstimationClass::updatePointsToMap(const pcl::PointCloud<pcl::PointXYZ>
         kdtreeSurfMap->setInputCloud(laserCloudSurfMap);
       
         for (int iterCount = 0; iterCount < optimization_count; iterCount++){
-            float loss_value = 0.25;
+            float loss_value = 0.25; 
             ceres::LossFunction *loss_function = new ceres::HuberLoss(loss_value); //  ceres::SoftLOneLoss(loss_value);
             ceres::Problem::Options problem_options;
             ceres::Problem problem(problem_options);
@@ -344,8 +344,8 @@ void OdomEstimationClass::updatePointsToMap(const pcl::PointCloud<pcl::PointXYZ>
 
             ceres::Solver::Options options;
             options.linear_solver_type = ceres::DENSE_QR;
-            options.max_num_iterations = 100;
-            options.gradient_check_relative_precision = 1e-4;
+            options.max_num_iterations = 100; // 100 para Kitti
+            options.gradient_check_relative_precision = 1e-4;  
             options.minimizer_progress_to_stdout = true;
             options.check_gradients = false;
             options.num_threads = 10;
