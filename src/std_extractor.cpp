@@ -587,8 +587,8 @@ int main(int argc, char **argv) {
     ros::Publisher pose_pub_curr = nh.advertise<geometry_msgs::PoseArray>("std_curr_poses", 10);
 
     ros::Subscriber subLaserCloud = nh.subscribe<sensor_msgs::PointCloud2>("/velodyne_points", 100, laserCloudHandler);
-    ros::Subscriber subOdom = nh.subscribe<nav_msgs::Odometry>("/odom", 100, OdomHandler);
-    ros::Publisher cloud_pub = nh.advertise<sensor_msgs::PointCloud2>("output_cloud", 1);
+    ros::Subscriber subOdom = nh.subscribe<nav_msgs::Odometry>("/odom_dq", 100, OdomHandler);
+    ros::Publisher cloud_pub = nh.advertise<sensor_msgs::PointCloud2>("output_cloud_std_ex", 1);
     ros::Publisher cloud_pub_prev = nh.advertise<sensor_msgs::PointCloud2>("output_cloud_prev", 1);
 
 
@@ -792,8 +792,8 @@ int main(int argc, char **argv) {
 
             ////// visualizacion de los triangulos del mapa filtrado
             visualization_msgs::MarkerArray marker_map_filter;
-            Eigen::Vector3f colorVector_map_fil(1.0f, 0.0f, 1.0f);  // rojo
-            MAPconvertToMarkers(mat, marker_map_filter,colorVector_map_fil ,0.5);
+            Eigen::Vector3f colorVector_map_fil(1.0f, 0.0f, 1.0f);  // morado
+            MAPconvertToMarkers(mat, marker_map_filter,colorVector_map_fil ,1.0,0.05);
             pubkeymap_filter.publish(marker_map_filter);
             visualization_msgs::Marker delete_map_filter;
             delete_map_filter.action = visualization_msgs::Marker::DELETEALL;

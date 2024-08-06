@@ -224,7 +224,8 @@ void STD_matching(std::vector<STDesc>& stds_curr_body, std::vector<STDesc>& stds
                 cont_desc_pairs++;
 
                 // function to draw STD arrows
-                //generateArrow(descC_W, std_local_map[ret_indexes[i]], marker_array, id, msg_point->header);
+                // int id = 0;
+                // generateArrow(descC_W, std_local_map[ret_indexes[i]], marker_array, id, msg_point->header);
 
                 stdM_pair.push_back(std_local_map[ret_indexes[i]]);
                 stdC_pair.push_back(descC_B);
@@ -578,7 +579,7 @@ int main(int argc, char **argv)
     pubSTD = nh.advertise<visualization_msgs::MarkerArray>("pair_std", 10);
     cloud_pub = nh.advertise<sensor_msgs::PointCloud2>("output_cloud", 10);
 
-    // topics to show the pose of each STD descriptor
+    // // // topics to show the pose of each STD descriptor
     // std_pub_Map = nh.advertise<geometry_msgs::PoseArray>("std_prev_poses", 10);
     // std_pub_Cur = nh.advertise<geometry_msgs::PoseArray>("std_curr_poses", 10);
 
