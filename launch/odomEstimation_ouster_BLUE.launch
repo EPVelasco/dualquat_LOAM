@@ -24,13 +24,13 @@
     <!-- <param name="/pcl_edge" type="str" value="/laser_cloud_edge" /> 
     <param name="/pcl_surf" type="str" value="/laser_cloud_surf" /> -->
     <param name="/childframeID" type="str" value="os_sensor" /> 
-    <param name="cropBox_len" type="double" value="400" /> 
+    <param name="cropBox_len" type="double" value="800" /> 
     <param name="cont_opti" type="double" value="3.0" />
-    <param name="voxel_cloud_world" type="double" value="5.0" />
+    <param name="voxel_cloud_world" type="double" value="0.5" />
         
 
     
-    <param name="cont_for_map" type="double" value="1" /> 
+    <param name="cont_for_map" type="double" value="20" /> 
     
 
         <!-- <node pkg="tf" type="static_transform_publisher" name="word2map_tf"  args="0.0 -0.32 1.73 -1.6 0.05 0 /world /map 10" />
@@ -50,7 +50,7 @@
     </node>  -->
 
     <param name="save_data" type="bool" value="true" />    
-    <param name="/path_odom"                 type="str" value="/home/ws/src/parque_cientifico/loop_07.txt" /> 
+    <param name="/path_odom"                 type="str" value="/home/ws/src/parque_cientifico/loop_06/loop_06.txt" /> 
     <param name="/path_calib" type="str" value="/home/lo-udq/catkin_ws/src/odom_estimation_pc/gt_kitti/calib_velo_camera/00.txt" />
    
     <node pkg="tf" type="static_transform_publisher" name="word2odom_tf"  args="0 0 0 0 0 0 /map /odom 10" />

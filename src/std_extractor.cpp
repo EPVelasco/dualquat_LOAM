@@ -318,7 +318,7 @@ void publishLocalMap(const std::deque<STDesc>& std_local_map, visualization_msgs
 
 
     
-    convertToMarkers(temp_vector, marker_array, color, alpha,0.06);
+    convertToMarkers(temp_vector, marker_array, color, alpha,0.03);
 }
 
 // Función para generar colores aleatorios
@@ -711,7 +711,7 @@ int main(int argc, char **argv) {
             visualization_msgs::MarkerArray marker_array_curr;
             Eigen::Vector3f colorVector_curr(0.0f, 0.0f, 1.0f);  // azul
 
-            convertToMarkers(stds_curr, marker_array_curr,colorVector_curr ,0.5);
+            convertToMarkers(stds_curr, marker_array_curr,colorVector_curr ,0.5,0.05);
             pubkeycurr.publish(marker_array_curr);
             visualization_msgs::Marker delete_marker_curr;
             delete_marker_curr.action = visualization_msgs::Marker::DELETEALL;
@@ -733,7 +733,7 @@ int main(int argc, char **argv) {
             ////// visualizacion de los keypoints prev
             visualization_msgs::MarkerArray marker_array_prev;
             Eigen::Vector3f colorVector_prev(1.0f, 0.0f, 0.0f);  // rojo
-            convertToMarkers(stds_prev, marker_array_prev,colorVector_prev ,0.5);
+            convertToMarkers(stds_prev, marker_array_prev,colorVector_prev ,0.25);
             pubkeyprev.publish(marker_array_prev);
             visualization_msgs::Marker delete_marker_prev;
             delete_marker_prev.action = visualization_msgs::Marker::DELETEALL;
@@ -754,7 +754,7 @@ int main(int argc, char **argv) {
             /////////////// plot stds_map
             visualization_msgs::MarkerArray marker_array_map;
             Eigen::Vector3f colorVector_map(0.0f, 0.0f, 0.0f);  // negro
-            publishLocalMap(std_local_map, marker_array_map,colorVector_map ,0.2);
+            publishLocalMap(std_local_map, marker_array_map,colorVector_map ,0.5);
             pubkeymap.publish(marker_array_map);
 
             ////////////////////////////////////////////////////////////////////////////////////////////////
