@@ -30,7 +30,7 @@ dis_threshold: 0.5
 icp_threshold: 0.4
 
 # window size
-max_window_size: 2.0
+max_window_size: 10.0
 # for Kitti max_window_size: 10.0
 kdtree_threshold: 10.0
 epsilon: 0.001

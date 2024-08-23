@@ -61,7 +61,7 @@ void OdomHandler(const nav_msgs::Odometry::ConstPtr &msg) {
     odom_buffer.push(msg);
 }
 
-//////////////////////////////// Sincronización de los datos:
+//////////////////////////////// Data synchronization:
 bool syncPackages(PointCloud::Ptr &cloud, Eigen::Affine3d &pose) {
     if (laser_buffer.empty() || odom_buffer.empty())
         return false;
@@ -111,6 +111,7 @@ bool syncPackages(PointCloud::Ptr &cloud, Eigen::Affine3d &pose) {
 }
 ////////////////////////////////////////////////////////////////
 
+//////////////////// Read Input Point Cloud //////////////////////
 bool readPC(PointCloud::Ptr &cloud) {
     if (laser_buffer.empty())
         return false;
@@ -122,6 +123,7 @@ bool readPC(PointCloud::Ptr &cloud) {
     laser_buffer.pop();
     return true;
 }
+//////////////////////////////////////////////////////////////////
 
 void convertToMarkers(const std::vector<STDesc>& stds, visualization_msgs::MarkerArray& marker_array, const Eigen::Vector3f& color, float alpha = 1.0, float scale = 0.03) {
     int id = 0;
@@ -224,7 +226,7 @@ void MAPconvertToPointCloud(const Eigen::MatrixXf& data, pcl::PointCloud<pcl::Po
     for (int i = 0; i < data.rows(); ++i) {
         pcl::PointXYZ p1, p2, p3;
 
-        // Asumiendo que los vertices estan en las posiciones 9-17
+        // the vertices are in positions 9-17
         p1.x = data(i, 9);
         p1.y = data(i, 10);
         p1.z = data(i, 11);
@@ -267,8 +269,7 @@ void printVector(const std::vector<T>& vec) {
 }
 
 void addDescriptorToMatrix(Eigen::MatrixXf& mat, const STDesc& desc, int row) {
-
-    // la matriz tiene 36 elementos
+    // the matrix has 36 elements
     Eigen::Vector3f side_length = desc.side_length_.cast<float>();
     Eigen::Vector3f angle = desc.angle_.cast<float>();
     Eigen::Vector3f center = desc.center_.cast<float>();
@@ -297,12 +298,11 @@ void updateMatrixAndKDTree(Eigen::MatrixXf& mat, std::unique_ptr<nanoflann::KDTr
     int num_desc = std_local_map.size();
     mat.resize(num_desc, 36);
 
-    // Rellenar la matriz con los descriptores actuales
+    // Fill the matrix with the current descriptors
     for (size_t i = 0; i < std_local_map.size(); ++i) {
         addDescriptorToMatrix(mat, std_local_map[i], i);
     }
-
-    // Recrear el KD-Tree con la matriz actualizada
+    // Recreate the KD-Tree with the updated matrix
     index = std::make_unique<nanoflann::KDTreeEigenMatrixAdaptor<Eigen::MatrixXf>>(36, std::cref(mat), 10 /* max leaf */);
     index->index_->buildIndex();
 }
@@ -315,13 +315,10 @@ void publishLocalMap(const std::deque<STDesc>& std_local_map, visualization_msgs
     }
     // std::cout << "publishLocalMap**********: " << std_local_map.size() << std::endl;
     // std::cout << "temp_vector " << temp_vector.size() << std::endl;
-
-
-    
     convertToMarkers(temp_vector, marker_array, color, alpha,0.03);
 }
 
-// Función para generar colores aleatorios
+// Function to generate random colors
 std::tuple<float, float, float> getRandomColor() {
     static std::random_device rd;
     static std::mt19937 gen(rd());
@@ -340,20 +337,20 @@ void generateArrow(const STDesc& desc1, const STDesc& desc2, visualization_msgs:
     arrow.scale.y = 0.2;  // Grosor de la cabeza de la flecha
     arrow.scale.z = 0.4;   // Longitud de la cabeza de la flecha
     
-    // Generar color aleatorio
+    // random color for the arrow
     auto [r, g, b] = getRandomColor();
     arrow.color.r = r;
     arrow.color.g = g;
     arrow.color.b = b;
     arrow.color.a = 1.0;
 
-    // Punto de inicio (centro del descriptor 1)
+    // Starting point (center of descriptor 1)
     geometry_msgs::Point start;
     start.x = desc1.center_(0);
     start.y = desc1.center_(1);
     start.z = desc1.center_(2);
 
-    // Punto final (centro del descriptor 2)
+    // End point (center of descriptor 2)
     geometry_msgs::Point end;
     end.x = desc2.center_(0);
     end.y = desc2.center_(1);
@@ -365,14 +362,14 @@ void generateArrow(const STDesc& desc1, const STDesc& desc2, visualization_msgs:
     marker_array.markers.push_back(arrow);
 }
 
-// Función para calcular la distancia euclidiana entre dos vértices
+// Function to calculate the Euclidean distance between two vertices
 float calcularDistancia(const Eigen::Vector3f &v1, const Eigen::Vector3f &v2) {
     return (v1 - v2).norm();
 }
 
 void extractVerticesToMatrix(const std::deque<STDesc>& std_local_map, Eigen::MatrixXf& all_vertices) {
     const int num_desc = std_local_map.size();
-    all_vertices.resize(3 * num_desc, 3); // 3 filas por descriptor, cada una con 3 coordenadas
+    all_vertices.resize(3 * num_desc, 3); // 3 rows per descriptor, each with 3 coordinates
 
     for (size_t i = 0; i < num_desc; ++i) {
         all_vertices.row(3 * i) = std_local_map[i].vertex_A_.transpose().cast<float>();   // vertex_A
@@ -384,10 +381,10 @@ void extractVerticesToMatrix(const std::deque<STDesc>& std_local_map, Eigen::Mat
 void build_std_filter( const pcl::PointCloud<pcl::PointXYZINormal>::Ptr &corner_points, std::vector<STDesc> &stds_vec, const ConfigSetting &config_setting_) {
 
     double scale = 1.0 / config_setting_.std_side_resolution_;   
-    unsigned int current_frame_id_ = 0; // Se asume que este valor se incrementa en cada llamada a la función
+    unsigned int current_frame_id_ = 0; // It is assumed that this value is incremented on each call to the function
 
     for (size_t i = 0; i < corner_points->size(); i += 3) {
-        if (i + 2 >= corner_points->size()) break; // Asegurarse de que haya al menos tres puntos para formar un triángulo
+        if (i + 2 >= corner_points->size()) break; // Make sure there are at least three points to form a triangle.
 
         pcl::PointXYZINormal p1 = corner_points->points[i];
         pcl::PointXYZINormal p2 = corner_points->points[i + 1];
@@ -426,23 +423,23 @@ void build_std_filter( const pcl::PointCloud<pcl::PointXYZINormal>::Ptr &corner_
     }
 }
    
-// Función para verificar y agrupar vértices dentro de un radio
+// Function to check and group vertices within a radius
 void cluster_vertx(const Eigen::MatrixXf &vertices, std::vector<int> &labels, const float EPSILON) {
     std::cout<<"epsilon: "<<EPSILON<<std::endl;
     const int num_points = vertices.rows();
-    labels.assign(num_points, -1); // Inicializar etiquetas a -1 (no visitado)
+    labels.assign(num_points, -1); // Initialize tags to -1 (not visited)
     int current_label = 0;
 
     for (int i = 0; i < num_points; ++i) {
-        if (labels[i] != -1) continue; // Si ya está etiquetado, continuar al siguiente
+        if (labels[i] != -1) continue; // If already labeled, continue to the next one
 
-        // Etiquetar el punto actual con una nueva etiqueta de cluster
+        // Label the current point with a new cluster label
         labels[i] = current_label;
 
-        // Recorrer todos los puntos desde el siguiente al actual para encontrar vecinos
+        // Scan all points from the next to the current one to find neighbors
         for (int j = i + 1; j < num_points; ++j) {
             if (calcularDistancia(vertices.row(i).transpose(), vertices.row(j).transpose()) <= EPSILON) {
-                labels[j] = current_label; // Etiquetar el punto vecino con la misma etiqueta de cluster
+                labels[j] = current_label; // Label the neighboring point with the same cluster label
             }
         }
         current_label++;
@@ -451,12 +448,12 @@ void cluster_vertx(const Eigen::MatrixXf &vertices, std::vector<int> &labels, co
 
 }
 
-// Función para promediar los vértices agrupados por labels
-Eigen::MatrixXf promediarVertices(const Eigen::MatrixXf &vertices, const std::vector<int> &labels) {
+// Function for averaging vertices grouped by labels
+Eigen::MatrixXf meanVertex(const Eigen::MatrixXf &vertices, const std::vector<int> &labels) {
     std::map<int, Eigen::Vector3f> sum_vertices;
     std::map<int, int> count_vertices;
 
-    // Sumarizar los vértices por label
+    // Sum the vertices per label
     for (int i = 0; i < vertices.rows(); ++i) {
         int label = labels[i];
         if (label >= 0) {
@@ -469,7 +466,7 @@ Eigen::MatrixXf promediarVertices(const Eigen::MatrixXf &vertices, const std::ve
         }
     }
 
-    // Crear una nueva matriz de vértices con los promedios
+    // Create a new vertex matrix with the averages
     Eigen::MatrixXf new_vertices(vertices.rows(), vertices.cols());
 
     for (int i = 0; i < vertices.rows(); ++i) {
@@ -485,8 +482,8 @@ Eigen::MatrixXf promediarVertices(const Eigen::MatrixXf &vertices, const std::ve
 }
 
 void updateMatrixAndKDTreeWithFiltering(Eigen::MatrixXf& mat, std::unique_ptr<nanoflann::KDTreeEigenMatrixAdaptor<Eigen::MatrixXf>>& index, std::deque<STDesc>& std_local_map,  ConfigSetting config_setting) {
-    std::cout << "Tamaño de std_local_map: " << std_local_map.size() << std::endl;
-    std::cout << "Tamaño de  a mat: " << mat.size()/36 << std::endl;
+    std::cout << "Size of std_local_map: " << std_local_map.size() << std::endl;
+    std::cout << "Size of a mat: " << mat.size()/36 << std::endl;
 
     int num_desc = std_local_map.size();
     mat.resize(num_desc, 36);
@@ -494,27 +491,27 @@ void updateMatrixAndKDTreeWithFiltering(Eigen::MatrixXf& mat, std::unique_ptr<na
     for (size_t i = 0; i < std_local_map.size(); ++i) {
         addDescriptorToMatrix(mat, std_local_map[i], i);
     }
-    std::cout << "Tamaño de std_local_map a mat: " << mat.size()/36 << std::endl;
+    std::cout << "Size of std_local_map and a mat: " << mat.size()/36 << std::endl;
 
  
 
-    /////////////////// Filtrado de vértices
+    /////////////////// Vertex filtering
     Eigen::MatrixXf all_vertices;
     extractVerticesToMatrix(std_local_map, all_vertices);
 
-    // Aplicar cluster a todos los vértices
+    // Apply cluster to all vertices
      std::vector<int> vertex_labels;
     cluster_vertx(all_vertices, vertex_labels, config_setting.epsilon_);
 
-    // std::cout << "Labels después de la agrupación:" << std::endl;
+    // std::cout << "Labels after the clustering:" << std::endl;
     // for (int label : vertex_labels) {
     //     std::cout << label << " ";
     // }
     // std::cout << std::endl;
 
-    Eigen::MatrixXf new_vertices = promediarVertices(all_vertices, vertex_labels);
+    Eigen::MatrixXf new_vertices = meanVertex(all_vertices, vertex_labels);
 
-    // Reconstruir std_local_map con los vértices fusionados
+    // Rebuild std_local_map with merged vertices
     std::deque<STDesc> filtered_std_local_map;
     pcl::PointCloud<pcl::PointXYZINormal>::Ptr corner_points(new pcl::PointCloud<pcl::PointXYZINormal>);
 
@@ -525,7 +522,6 @@ void updateMatrixAndKDTreeWithFiltering(Eigen::MatrixXf& mat, std::unique_ptr<na
         Eigen::Vector3d vertex_B = new_vertices.row(3 * i + 1).cast<double>();
         Eigen::Vector3d vertex_C = new_vertices.row(3 * i + 2).cast<double>();
 
-        // Supongamos que las normales originales están en std_local_map
         p1.x = vertex_A[0]; p1.y = vertex_A[1]; p1.z = vertex_A[2];
         p1.normal_x = std_local_map[i].normal1_[0]; p1.normal_y = std_local_map[i].normal1_[1]; p1.normal_z = std_local_map[i].normal1_[2];
         p1.intensity = std_local_map[i].vertex_attached_[0];
@@ -543,23 +539,23 @@ void updateMatrixAndKDTreeWithFiltering(Eigen::MatrixXf& mat, std::unique_ptr<na
         corner_points->points.push_back(p3);
     }
 
-    //Usar corner_points para construir stds_vec
+    //Use corner_points to construct stds_vec
     std::vector<STDesc> stds_vec;
     build_std_filter(corner_points, stds_vec, config_setting);
     filtered_std_local_map.assign(stds_vec.begin(), stds_vec.end());
-    // Actualizar std_local_map con los descriptores filtrados y fusionados
+    // Update std_local_map with filtered and merged descriptors
     std_local_map = std::move(filtered_std_local_map);
 
-    // Actualizar la matriz y el KD-Tree con los descriptores filtrados y fusionados
+    // Update matrix and KD-Tree with filtered and merged descriptors
     num_desc = std_local_map.size();
     mat.resize(num_desc, 36);
 
     for (size_t i = 0; i < std_local_map.size(); ++i) {
-        addDescriptorToMatrix(mat, std_local_map[i], i); // aqui se añaden ya los descritproes filtrados al mapa STD_local
+        addDescriptorToMatrix(mat, std_local_map[i], i); // here the filtered descriptions are already added to the STD_local map
 
     }
 
-    // Recrear el KD-Tree con la matriz actualizada
+    // Recreate the KD-Tree with the updated matrix
     index = std::make_unique<nanoflann::KDTreeEigenMatrixAdaptor<Eigen::MatrixXf>>(36, std::cref(mat), 10 /* max leaf */);
     index->index_->buildIndex();
 }
@@ -581,8 +577,8 @@ int main(int argc, char **argv) {
     ros::Publisher pub_map_points = nh.advertise<sensor_msgs::PointCloud2>("std_map_points", 10);
     
     ros::Publisher pubSTD = nh.advertise<visualization_msgs::MarkerArray>("pair_std", 10);
-    ros::Publisher marker_pub_prev = nh.advertise<visualization_msgs::MarkerArray>("Axes_prev_STD", 10);
-    ros::Publisher marker_pub_curr = nh.advertise<visualization_msgs::MarkerArray>("Axes_curr_STD", 10);
+    // ros::Publisher marker_pub_prev = nh.advertise<visualization_msgs::MarkerArray>("Axes_prev_STD", 10);
+    // ros::Publisher marker_pub_curr = nh.advertise<visualization_msgs::MarkerArray>("Axes_curr_STD", 10);
     ros::Publisher pose_pub_prev = nh.advertise<geometry_msgs::PoseArray>("std_prev_poses", 10);
     ros::Publisher pose_pub_curr = nh.advertise<geometry_msgs::PoseArray>("std_curr_poses", 10);
 
@@ -665,7 +661,7 @@ int main(int argc, char **argv) {
                         query.insert(query.end(), norms3.data(), norms3.data() + 3);
                         query.insert(query.end(), axes_f.data(), axes_f.data() + axes_f.size());
 
-                        // Buscar el descriptor más cercano
+                        // Search for the nearest descriptor
                         const size_t num_results = 1;
                         std::vector<size_t> ret_indexes(num_results);
                         std::vector<float> out_dists_sqr(num_results);
@@ -684,13 +680,13 @@ int main(int argc, char **argv) {
                                 stds_curr_pair.push_back(desc);
                             }
                             else{
-                                // elementos que no tuvieron match para ser añadidos a std_map para hacer el mapa robusto:
+                                // elements that had no match to be added to std_map to make the map robust:
                                 stds_map.push_back(desc);
                             }
                         }
                     }
 
-                    // Publicar las flechas en RViz
+                    // Publish arrows in RViz
                     pubSTD.publish(marker_array);
                     visualization_msgs::Marker delete_marker_curr;
                     delete_marker_curr.action = visualization_msgs::Marker::DELETEALL;
@@ -702,10 +698,10 @@ int main(int argc, char **argv) {
 
             sensor_msgs::PointCloud2 output_cloud;
             pcl::toROSMsg(*current_cloud_world, output_cloud);
-            output_cloud.header.frame_id = "map";  // O el frame_id que desees
+            output_cloud.header.frame_id = "map";  
             cloud_pub.publish(output_cloud);
             
-          ///////////////// Data visualization //////////////////////////////////////////////
+            ///////////////// Data visualization ///////
 
             //// visualizacion de los keypoints current
             visualization_msgs::MarkerArray marker_array_curr;
@@ -753,20 +749,20 @@ int main(int argc, char **argv) {
 
             /////////////// plot stds_map
             visualization_msgs::MarkerArray marker_array_map;
-            Eigen::Vector3f colorVector_map(0.0f, 0.0f, 0.0f);  // negro
+            Eigen::Vector3f colorVector_map(0.0f, 0.0f, 0.0f); 
             publishLocalMap(std_local_map, marker_array_map,colorVector_map ,0.5);
             pubkeymap.publish(marker_array_map);
 
             ////////////////////////////////////////////////////////////////////////////////////////////////
 
-             std::cout << "Pares encontrados: " << cont_desc_pairs << std::endl;
-            // Añadir los nuevos descriptores de stds_curr a std_local_map
+             std::cout << "Matching pairs: " << cont_desc_pairs << std::endl;
+            // Add new stds_curr descriptors to std_local_map
             if(!init_std){
                 pcl::transformPointCloud(*current_cloud, *current_cloud_world, pose);
                 std_manager->GenerateSTDescs(current_cloud_world, stds_curr);
             }
             std_local_map.insert(std_local_map.end(), stds_curr.begin(), stds_curr.end());
-            //////////////////////////// Eliminacion de elementos por ventana ///////////////
+            ////////////////////////////Removal of elements per window///////////////
             counts_per_iteration.push_back(stds_curr.size());
             while (counts_per_iteration.size() > config_setting.max_window_size_) {
                 int count_to_remove = counts_per_iteration.front();
@@ -777,12 +773,12 @@ int main(int argc, char **argv) {
             }
             ////////////////////////////////////////////////////////////////////////////////////
 
-            // Actualizar la matriz con el filtrado por vertices
+            // Update the matrix with the filtering by vertices
 
             updateMatrixAndKDTreeWithFiltering(mat, index, std_local_map, config_setting);
             //updateMatrixAndKDTree(mat, index, std_local_map);
 
-            ////// publicacion de nube de puntos en los vertices de los stds del MAPA filtrado
+            ////// publication of point cloud on the vertices of the filtered MAP stds
             pcl::PointCloud<pcl::PointXYZ>::Ptr std_map_pcl(new pcl::PointCloud<pcl::PointXYZ>);
             MAPconvertToPointCloud(mat, std_map_pcl);
             sensor_msgs::PointCloud2 output_map_point;
@@ -790,14 +786,14 @@ int main(int argc, char **argv) {
             output_map_point.header.frame_id = "map";
             pub_map_points.publish(output_map_point);
 
-            ////// visualizacion de los triangulos del mapa filtrado
+            ////// display of the filtered map triangles
             visualization_msgs::MarkerArray marker_map_filter;
-            Eigen::Vector3f colorVector_map_fil(1.0f, 0.0f, 1.0f);  // morado
+            Eigen::Vector3f colorVector_map_fil(1.0f, 0.0f, 1.0f);  
             MAPconvertToMarkers(mat, marker_map_filter,colorVector_map_fil ,1.0,0.05);
             pubkeymap_filter.publish(marker_map_filter);
             visualization_msgs::Marker delete_map_filter;
             delete_map_filter.action = visualization_msgs::Marker::DELETEALL;
-            marker_map_filter.markers.clear();  // Asegúrate de que el array de marcadores esté vacío
+            marker_map_filter.markers.clear();  
             marker_map_filter.markers.push_back(delete_map_filter);
             pubkeymap_filter.publish(marker_map_filter);
             //////////////////////////////////////////
@@ -810,10 +806,10 @@ int main(int argc, char **argv) {
             std_manager->publishPoses(pose_pub_prev, stds_map_pair, msg_point->header,"map");
             std_manager->publishPoses(pose_pub_curr, stds_curr_pair, msg_point->header,"map");
 
-            // Actualizar stds_prev
+            // update stds_prev
             stds_prev = stds_curr;
             pose_prev = pose;
-            std::cout<<"Iteracion: "<<cont_itera++<<std::endl;            
+            std::cout<<"Iteration: "<<cont_itera++<<std::endl;            
         }
     }
 

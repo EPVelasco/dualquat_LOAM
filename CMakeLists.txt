@@ -102,8 +102,8 @@ target_link_libraries(dq_pose_estimation_node ${EIGEN3_LIBRARIES} ${catkin_LIBRA
 add_executable(laser_mapping src/laserMappingNode.cpp src/laserMappingClass.cpp)
 target_link_libraries(laser_mapping ${EIGEN3_LIBRARIES} ${catkin_LIBRARIES} ${PCL_LIBRARIES} ${CERES_LIBRARIES} dqrobotics)
 
-add_executable(std_example src/std_extractor.cpp src/STDesc.cpp src/KDTree_STD.cpp)
-        target_link_libraries(std_example
+add_executable(std_extractor src/std_extractor.cpp src/STDesc.cpp src/KDTree_STD.cpp)
+        target_link_libraries(std_extractor
                 ${catkin_LIBRARIES}
                 ${PCL_LIBRARIES}
                 ${OpenCV_LIBS}

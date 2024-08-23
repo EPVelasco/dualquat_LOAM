@@ -171,11 +171,11 @@ Eigen::Matrix<T,8,1>  getTransformFromSe3(const Eigen::Matrix<T,6,1>& se3){
 }
 
 Eigen::Matrix<double,8,1> calculatePluckerLine(const Vector3d& p1, const Vector3d& p2) {
-    // Calcular la dirección y el dual de la línea de Plücker
+    // Calculate the direction and the dual of the Plücker line
     //Eigen::Vector3d direction = p1.cross(p2);
     Eigen::Vector3d direction = p1-p2;
 
-    // Normalizar la dirección
+    // Normalize the direction
     direction.normalize();
     DQ l1(0,direction.x(),direction.y(),direction.z(),0,0,0,0);
     DQ p1_dq(0,p1.x(),p1.y(),p1.z());
@@ -187,20 +187,20 @@ Eigen::Matrix<double,8,1> calculatePluckerLine(const Vector3d& p1, const Vector3
     return Pl_dq_eigen;
 }
 
-// Función para ajustar un plano a un conjunto de puntos de muestra
+// Function to fit a plane to a set of sample points
 void fit_plane(const MatrixXd& X, Vector3d& n, Vector3d& p) {
-    // Calcular el punto medio de las muestras, que pertenece al plano
+    // Calculate the midpoint of the samples, which belongs to the plane
     p = X.colwise().mean();
 
-    // Centrar las muestras restando el punto medio
+    // Center the samples by subtracting the midpoint
     MatrixXd R = X.rowwise() - p.transpose();
 
-    // Calcular las direcciones principales de la nube de muestras mediante descomposición de valores propios
+    // Calculate the principal directions of the sample cloud using eigenvalue decomposition
     SelfAdjointEigenSolver<MatrixXd> eigensolver(R.transpose() * R);
     VectorXd eigenvalues = eigensolver.eigenvalues();
     MatrixXd eigenvectors = eigensolver.eigenvectors();
 
-    // Extraer el vector propio correspondiente a la dirección normal del plano (n)
+    // Extract the eigenvector corresponding to the plane's normal direction (n)
     n = eigenvectors.col(0);
 
 }
@@ -208,7 +208,7 @@ void fit_plane(const MatrixXd& X, Vector3d& n, Vector3d& p) {
 
 Eigen::Matrix<double,8,1> calculatePlane(Vector3d& n, Vector3d& p) {
     
-    // Normalizar la 
+    // Normalize the normal vector
     n.normalize();
     DQ n1(0,n.x(),n.y(),n.z(),0,0,0,0);
 
@@ -221,17 +221,17 @@ Eigen::Matrix<double,8,1> calculatePlane(Vector3d& n, Vector3d& p) {
     return plane_eigen;
 }
 
-// Función para verificar si los puntos están lo suficientemente cerca del plano ajustado
+// Function to check if points are close enough to the fitted plane
 bool isPlane(const MatrixXd& X, const Vector3d& n, const Vector3d& p, double umbral) {
     for (int i = 0; i < X.rows(); ++i) {
-        // Calcular la distancia de cada punto al plano utilizando la ecuación del plano
+        // Calculate the distance of each point to the plane using the plane equation
         double distancia = fabs(n.dot(X.row(i)) - n.dot(p));
-        // Verificar si la distancia supera el umbral
+        // Check if the distance exceeds the threshold
         if (distancia > umbral) {
-            return false; // El punto está demasiado lejos del plano
+            return false; // The point is too far from the plane
         }
     }
-    return true; // Todos los puntos están lo suficientemente cerca del plano
+    return true; // All points are close enough to the plane
 }
 
 
@@ -291,7 +291,7 @@ Eigen::Matrix<T,8,1> dualquatMult(const Eigen::Matrix<T,8,1>& q1, const Eigen::M
     return res_mul;
 }
 
-// funcion quaterniones left and rigth
+// Quaternion left and right multiplication
 template<typename T>
 Eigen::Matrix<T, 4, 4> quaternion_left(Eigen::Quaternion<T> q) {
     Eigen::Matrix<T, 4, 4> Q1;
@@ -362,7 +362,7 @@ Eigen::Matrix<T, 8, 1> exp_dq(Eigen::Matrix<T, 8, 1> q)
         prim_exp(2) = (sin(phi)/phi) * q(2);
         prim_exp(3) = (sin(phi)/phi) * q(3);
 
-        Eigen::Quaternion<T> prim_exp_quat;      /// convierto de matriz de 4x1  a un objeto de quaternion
+        Eigen::Quaternion<T> prim_exp_quat;      /// convert from 4x1 matrix to quaternion object
         prim_exp_quat.w()=prim_exp(0);
         prim_exp_quat.x()=prim_exp(1);
         prim_exp_quat.y()=prim_exp(2);

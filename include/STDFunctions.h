@@ -4,6 +4,7 @@
 // Internal library
 #include "STDesc.h"
 #include "KDTree_STD.h"
+#include <random> // only for plot arrows with differents color
 
 #ifndef _STD_FUNCTIONS_H_
 #define _STD_FUNCTIONS_H_

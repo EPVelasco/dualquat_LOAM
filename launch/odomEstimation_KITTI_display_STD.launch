@@ -36,6 +36,9 @@
     <node pkg="tf" type="static_transform_publisher" name="word2odom_tf"  args="0 0 0 0 0 0 /map /odom 10" />
 
     <node pkg="dualquat_loam" type="dq_pose_estimation_node" name="dq_pose_estimation_node" output="screen"/>
+
+    <!-- To show STD in the pose estimation -->
+    <node pkg="dualquat_loam" type="std_extractor" name="std_show" output="screen"/>
   
     <node pkg="hector_trajectory_server" type="hector_trajectory_server" name="trajectory_loDQ" ns="dualquat_odom" >
         <param name="/target_frame_name" value="odom" />
@@ -45,8 +48,8 @@
     </node> 
 
     <!-- RViz -->
-    <arg name="rviz" default="false"/>
-    <node pkg="rviz" type="rviz" name="dualquat_loam_rviz" args="-d $(find dualquat_loam)/rviz/kitti_fov.rviz" if="$(arg rviz)"/>
+    <arg name="rviz" default="true"/>
+    <node pkg="rviz" type="rviz" name="dualquat_loam_rviz" args="-d $(find dualquat_loam)/rviz/kitti_displayed_std.rviz" if="$(arg rviz)"/>
 
 </launch>
 

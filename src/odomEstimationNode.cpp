@@ -8,7 +8,6 @@
 #include <queue>
 #include <thread>
 #include <chrono>
-#include <random> // only for plot arrows with differents color
 
 //ros lib
 #include <ros/ros.h>
@@ -55,10 +54,7 @@ std::string surf_pcl = "/pcl_surf";
 std::string stdescri = "/std_curr_poses";
 std::string stdMap   = "/std_map_poses";
 std::string pcTopic   = "/velodyne_points";
-
 std::string path_odom =  "/home/ws/src/resultados_dualquat_loam/00.txt";
-
-std::string path_calib = "/epvelasco/dataset/KITTI/rosbags_velodyne/dataset/calib_velo_camera/00.txt"; // no usar
 
 ros::Publisher pubLaserOdometry;
 ros::Publisher pubOdometryDiff;
@@ -112,65 +108,11 @@ bool readPC(pcSTD::Ptr &cloud) {
     return true;
 }
 
-
 Eigen::Matrix4d imu_to_cam = Eigen::Matrix4d::Identity();
 Eigen::Matrix4d imu_to_velo = Eigen::Matrix4d::Identity();
 Eigen::Matrix4d velo_to_cam = Eigen::Matrix4d::Identity();
 
 int cont_map = 0;
-
-/*void loadCalib_kitti(std::string path_calib){
-
-// Definir variables para almacenar los valores
-    std::string calib_time;
-    Eigen::Matrix3d R = Eigen::Matrix3d::Identity();
-    Eigen::Vector3d T (0,0,0);
-
-    // Abrir el archivo de texto
-    std::ifstream file(path_calib);
-    if (!file.is_open()) {
-        std::cerr << "Error al abrir el archivo de calibracion camara velodyne." << std::endl;
-    }
-
-    // Leer el archivo línea por línea
-    std::string line;
-    while (std::getline(file, line)) {
-        // Leer la línea como un stringstream
-        std::istringstream iss(line);
-        std::string key;
-
-        // Leer la clave y los valores correspondientes
-        iss >> key;
-        if (key == "calib_time:") {
-            iss >> calib_time;
-        } else if (key == "R:") {
-            for (int i = 0; i < 3; ++i) {
-                for (int j = 0; j < 3; ++j) {
-                    iss >> R(i, j);
-                }
-            }
-        } else if (key == "T:") {
-            for (int i = 0; i < 3; ++i) {
-                iss >> T(i);
-            }
-        }
-    }
-
-    // Cerrar el archivo
-    file.close();
-
-    // Imprimir los valores leídos
-    //std::cout << "calib_time: " << calib_time << std::endl;
-    std::cerr << "Matriz de calibracion Velodyne_camara." << std::endl;
-    std::cout << "R:" << std::endl << R << std::endl;
-    std::cout << "T:" << std::endl << T.transpose() << std::endl;
-
-    // Convertir la matriz de rotación a un cuaternión
-    Eigen::Quaterniond q(R);
-    velo_to_cam.block<3, 3>(0, 0) = q.toRotationMatrix();
-    Eigen::Vector3d T2 (0,0,0);
-    velo_to_cam.block<3, 1>(0, 3) = T2;
-}*/
 
 void STD_matching(std::vector<STDesc>& stds_curr_body, std::vector<STDesc>& stds_curr_world, std::deque<STDesc>&  std_local_map,
                   std::vector<STDesc>& stdC_pair, std::vector<STDesc>& stdM_pair,
@@ -341,7 +283,7 @@ void odom_estimation(){
                 std_manager->GenerateSTDescs(current_cloud, stds_curr_body);
                 ////////////////////////////////////////////////////////////////////////////
 
-                ////////////////////////////////////////////// STD matching
+                ///////////////////////////////// STD matching
                 STD_matching(stds_curr_body, stds_curr_w, std_local_map, stdC_pair, stdM_pair, index, pubSTD);
                 //////////////////////////////////////////////////////////////////////////////////
                 odomEstimation.updatePointsToMap(pointcloud_edge_in, pointcloud_surf_in, stdC_pair, stdM_pair, clear_map, cropBox_len, cont_opti);
@@ -375,8 +317,8 @@ void odom_estimation(){
                                     
                 org_outputFile << time_delay <<", ";
             }
-
             ///////////////////////////////////////////////////////
+
             //Project to 2D!!!
             // t_current.z() = 0.0;
             // double siny_cosp = 2 * (q_current.w() * q_current.z() + q_current.x() * q_current.y());
@@ -394,7 +336,7 @@ void odom_estimation(){
             transform.setRotation(q);
             br.sendTransform(tf::StampedTransform(transform, ros::Time::now(), "odom", childframeID));      
 
-                // //// TODO: FROM URDF!!!!!!!!
+            // //// TODO: FROM URDF!!!!!!!!
             // transform.setOrigin( tf::Vector3(-0.55, 0.0, -0.645) );
             // tf::Quaternion q2(0.0, 0.0, 0.0, 1.0);
             // transform.setRotation(q2);
@@ -438,7 +380,6 @@ void odom_estimation(){
             // std_manager->publishPoses(std_pub_Map, stdM_pair, msg_point->header,"map");
             // std_manager->publishPoses(std_pub_Cur, stdC_pair, msg_point->header,"map");
 
-
             end = std::chrono::system_clock::now();
             std::chrono::duration<float> elapsed_seconds = end - start;
             total_frame++;
@@ -448,15 +389,13 @@ void odom_estimation(){
             ROS_INFO("average odom estimation time %f mS", time_delay);
             time_delay = time_delay/1000.0;
 
-
             //////////////////////////////////////////////////////////////////////////////
 
             ///////////// original point cloud to map (only for visual representation)
             // pcl::PointCloud<pcl::PointXYZI>::Ptr orig_cloud_world(new pcl::PointCloud<pcl::PointXYZI>());
             // pcl::transformPointCloud(*orig_cloud, *orig_cloud_world, pose_estimated);
 
-            /////////////////////////////////////////77
-
+            //////////////////////////////////////////////////////////////////////////////
              
             // publish odometry
             nav_msgs::Odometry laserOdometry;
@@ -484,7 +423,7 @@ void odom_estimation(){
             odomDiff.pose.pose.position.z = t_diff.z();
 
 
-
+            //////////////// TO-DO covaraince calculation ////////////////
             for(int i = 0; i<36; i++) {
               if(i == 0 || i == 7 || i == 14) {
                 laserOdometry.pose.covariance[i] = .01;
@@ -496,6 +435,7 @@ void odom_estimation(){
                  laserOdometry.pose.covariance[i] = 0;
                }
             }
+            //////////////////////////////////////////////////////////////
 
             pubLaserOdometry.publish(laserOdometry);
             pubOdometryDiff.publish(odomDiff);
@@ -513,13 +453,10 @@ void odom_estimation(){
 
             
             if(cont>cont_map){
-            //if(true){
                 cont = 0;
                 cloud_pub.publish(output_cloud);
             }
             cont++;
-
-
          }
 
         std::chrono::milliseconds dura(1);
@@ -560,13 +497,10 @@ int main(int argc, char **argv)
     nh.getParam("/pcl_surf",surf_pcl);
     nh.getParam("/pcTopic",pcTopic);        
     nh.getParam("/path_odom",path_odom);    
-    nh.getParam("/path_calib",path_calib);
     nh.getParam("/cont_for_map",cont_map);
-    nh.getParam("/voxel_cloud_world",voxel_cloud_world);
-    
+    nh.getParam("/voxel_cloud_world",voxel_cloud_world);    
 
-    //loadCalib_kitti(path_calib); // cargar los datos de calibracion de Kitti
-    
+   
     odomEstimation.init(edge_resolution, surf_resolution);
     
     ros::Subscriber subEdgeLaserCloud = nh.subscribe<sensor_msgs::PointCloud2>(edge_pcl, 100, velodyneEdgeHandler);
@@ -578,11 +512,6 @@ int main(int argc, char **argv)
     time_average = nh.advertise<std_msgs::Float64>("/time_average", 100);
     pubSTD = nh.advertise<visualization_msgs::MarkerArray>("pair_std", 10);
     cloud_pub = nh.advertise<sensor_msgs::PointCloud2>("output_cloud", 10);
-
-    // // // topics to show the pose of each STD descriptor
-    // std_pub_Map = nh.advertise<geometry_msgs::PoseArray>("std_prev_poses", 10);
-    // std_pub_Cur = nh.advertise<geometry_msgs::PoseArray>("std_curr_poses", 10);
-
 
     std::thread odom_estimation_process{odom_estimation};
 
