@@ -360,8 +360,6 @@ void odom_estimation(){
             Eigen::Affine3d pose_estimated = odom;
             pcl::transformPointCloud(*current_cloud, *current_cloud_world, pose_estimated);
             std_manager->GenerateSTDescs(current_cloud_world, stds_curr_w);
-            std::cout << "Tamaño de stds_curr_w: " << stds_curr_w.size() << std::endl;
-
             std_local_map.insert(std_local_map.end(), stds_curr_w.begin(), stds_curr_w.end());
 
                     ///////////////////// cropping elements per window in std_local_map ///////////////

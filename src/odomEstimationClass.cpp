@@ -346,20 +346,20 @@ void OdomEstimationClass::updatePointsToMap(const pcl::PointCloud<pcl::PointXYZ>
             options.linear_solver_type = ceres::DENSE_QR;
             options.max_num_iterations = 100; // 100 para Kitti
             options.gradient_check_relative_precision = 1e-4;  
-            options.minimizer_progress_to_stdout = true;
+            options.minimizer_progress_to_stdout = false;
             options.check_gradients = false;
             options.num_threads = 10;
 
 
-            // Redirige la salida estándar al archivo
-            std::streambuf *coutbuf = std::cout.rdbuf(); // Guarda el buffer de la salida estándar
-            std::cout.rdbuf(org_outputFile.rdbuf()); // Redirige la salida estándar al archivo
+            // // Redirige la salida estándar al archivo
+            // std::streambuf *coutbuf = std::cout.rdbuf(); // Guarda el buffer de la salida estándar
+            // std::cout.rdbuf(org_outputFile.rdbuf()); // Redirige la salida estándar al archivo
 
             ceres::Solver::Summary summary;
             ceres::Solve(options, &problem, &summary);
 
-            // Restaura la salida estándar
-            std::cout.rdbuf(coutbuf);
+            // // Restaura la salida estándar
+            // std::cout.rdbuf(coutbuf);
 
             // std::cout << summary.BriefReport() << std::endl;
             // std::cout << summary.FullReport();
@@ -367,16 +367,16 @@ void OdomEstimationClass::updatePointsToMap(const pcl::PointCloud<pcl::PointXYZ>
             
             // printf("*********************************************************:\n");
 
-            std::cout << "Iteraciones exitosas: " << summary.num_successful_steps << std::endl;
-            org_outputFile << "Iteraciones exitosas: " << summary.num_successful_steps << std::endl;
-            org_outputFile << summary.BriefReport() << std::endl;
-            org_outputFile << summary.FullReport() << std::endl;
-            org_outputFile << "*********************************************************" << std::endl;
+            // std::cout << "Iteraciones exitosas: " << summary.num_successful_steps << std::endl;
+            // org_outputFile << "Iteraciones exitosas: " << summary.num_successful_steps << std::endl;
+            // org_outputFile << summary.BriefReport() << std::endl;
+            // org_outputFile << summary.FullReport() << std::endl;
+            // org_outputFile << "*********************************************************" << std::endl;
 
         }
-        Eigen::Matrix<double, 8, 1> dq_data = Eigen::Map<Eigen::Matrix<double, 8, 1>>(parameters);
-        org_outputFile<<"Resuelto: "<<dq_data.transpose()<<std::endl;
-        org_outputFile<< "______________________________________________________________________" << std::endl;
+        // Eigen::Matrix<double, 8, 1> dq_data = Eigen::Map<Eigen::Matrix<double, 8, 1>>(parameters);
+        // org_outputFile<<"Resuelto: "<<dq_data.transpose()<<std::endl;
+        // org_outputFile<< "______________________________________________________________________" << std::endl;
         
     }else{
         printf("not enough points in map to associate, map error\n");
@@ -697,12 +697,12 @@ void OdomEstimationClass::addPointsToMap(const pcl::PointCloud<pcl::PointXYZ>::P
     int contj = laserCloudSurfMap->size();
     ROS_INFO("Size: Corner: %d, Surf: %d", conti,contj );
 
-    double x_min = odom.translation().x()-50;
-    double y_min = odom.translation().y()-50;
-    double z_min = odom.translation().z()-50;
-    double x_max = odom.translation().x()+50;
-    double y_max = odom.translation().y()+50;
-    double z_max = odom.translation().z()+50;
+    double x_min = odom.translation().x()-100;
+    double y_min = odom.translation().y()-100;
+    double z_min = odom.translation().z()-100;
+    double x_max = odom.translation().x()+100;
+    double y_max = odom.translation().y()+100;
+    double z_max = odom.translation().z()+100;
     
     //ROS_INFO("size : %f,%f,%f,%f,%f,%f", x_min, y_min, z_min,x_max, y_max, z_max);
     cropBoxFilter.setMin(Eigen::Vector4f(x_min, y_min, z_min, 1.0));

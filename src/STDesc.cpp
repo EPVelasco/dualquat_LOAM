@@ -352,6 +352,7 @@ void STDescManager::GenerateSTDescs(
   for (auto iter = voxel_map.begin(); iter != voxel_map.end(); iter++) {
     delete (iter->second);
   }
+
   return;
 }
 
@@ -590,6 +591,7 @@ void STDescManager::init_voxel_map(
     const pcl::PointCloud<pcl::PointXYZI>::Ptr &input_cloud,
     std::unordered_map<VOXEL_LOC, OctoTree *> &voxel_map) {
   uint plsize = input_cloud->size();
+  
   for (uint i = 0; i < plsize; i++) {
     Eigen::Vector3d p_c(input_cloud->points[i].x, input_cloud->points[i].y,
                         input_cloud->points[i].z);
@@ -605,10 +607,13 @@ void STDescManager::init_voxel_map(
     auto iter = voxel_map.find(position);
     if (iter != voxel_map.end()) {
       voxel_map[position]->voxel_points_.push_back(p_c);
+    //std::cout<<"voxel_hola: "<<plsize<<std::endl;
     } else {
       OctoTree *octo_tree = new OctoTree(config_setting_);
       voxel_map[position] = octo_tree;
       voxel_map[position]->voxel_points_.push_back(p_c);
+      //std::cout<<"voxel adios: "<<plsize<<std::endl;
+      //delete octo_tree;
     }
   }
   std::vector<std::unordered_map<VOXEL_LOC, OctoTree *>::iterator> iter_list;

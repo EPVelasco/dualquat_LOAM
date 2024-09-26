@@ -281,6 +281,11 @@ public:
     }
     plane_ptr_ = new Plane;
   }
+  // Destructor: Liberar toda la memoria asignada dinámicamente
+  ~OctoTree() {
+    // Liberar la memoria
+    delete plane_ptr_;
+  }
   void init_plane();
   void init_octo_tree();
 };
@@ -395,6 +400,8 @@ public:
   void publishPoses(const ros::Publisher& pose_pub, const std::vector<STDesc>& descs, const std_msgs::Header& header, const std::string frame_id);
 
   //void publishAxes(const ros::Publisher& marker_pub, const std::vector<STDesc>&, const std_msgs::Header& header);
+
+  void clearDatabase();
 
 private:
   /*Following are sub-processing functions*/
