@@ -212,7 +212,7 @@ void odom_estimation(){
     pcSTD::Ptr current_cloud_world(new pcSTD); // pointcloud of the original sensor. It is used to std extractor
     // pcl::PointCloud<pcl::PointXYZI>::Ptr orig_cloud(new pcl::PointCloud<pcl::PointXYZI>()); // point cloud for output visualization
 
-    Eigen::MatrixXf mat(0, 24);   // matrix for elements en nanoflann
+    Eigen::MatrixXf mat(0, 24);   // matrix for elements in nanoflann
     std::unique_ptr<nanoflann::KDTreeEigenMatrixAdaptor<Eigen::MatrixXf>> index;
     Eigen::Affine3d poseSTD = Eigen::Affine3d::Identity();
     std::deque<int> counts_per_iteration; // use for the cropping data of std_local_map
@@ -302,18 +302,26 @@ void odom_estimation(){
 
                 outputFile << std::scientific;
 
-                outputFile <<   homogeneous_matrix(1,1) <<" "
-                           <<   homogeneous_matrix(1,2) <<" "
-                           <<  -homogeneous_matrix(1,0) <<" "
-                           <<  -homogeneous_matrix(1,3) <<" "
-                           <<   homogeneous_matrix(2,1) <<" "
-                           <<   homogeneous_matrix(2,2) <<" "
-                           <<  -homogeneous_matrix(2,0) <<" "
-                           <<  -homogeneous_matrix(2,3) <<" "
-                           <<  -homogeneous_matrix(0,1) <<" "
-                           <<  -homogeneous_matrix(0,2) <<" "
-                           <<   homogeneous_matrix(0,0) <<" "
-                           <<   homogeneous_matrix(0,3) << std::endl;  
+                // outputFile <<   homogeneous_matrix(1,1) <<" "
+                //            <<   homogeneous_matrix(1,2) <<" "
+                //            <<  -homogeneous_matrix(1,0) <<" "
+                //            <<  -homogeneous_matrix(1,3) <<" "
+                //            <<   homogeneous_matrix(2,1) <<" "
+                //            <<   homogeneous_matrix(2,2) <<" "
+                //            <<  -homogeneous_matrix(2,0) <<" "
+                //            <<  -homogeneous_matrix(2,3) <<" "
+                //            <<  -homogeneous_matrix(0,1) <<" "
+                //            <<  -homogeneous_matrix(0,2) <<" "
+                //            <<   homogeneous_matrix(0,0) <<" "
+                //            <<   homogeneous_matrix(0,3) << std::endl;  
+
+                outputFile <<   t_current.x() <<" "
+                           <<   t_current.y() <<" "
+                           <<   t_current.z() <<" "
+                           <<   q_current.w() <<" "
+                           <<   q_current.x() <<" "
+                           <<   q_current.y() <<" "
+                           <<   q_current.z() <<std::endl;  
                                     
                 org_outputFile << time_delay <<", ";
             }
@@ -373,6 +381,7 @@ void odom_estimation(){
             }
 
             // update mat matrix with filtering elements. it's necesary for the kdtree matching
+            //updateMatrixAndKDTree(mat, index, std_local_map);
             updateMatrixAndKDTreeWithFiltering(mat, index, std_local_map, config_setting);
 
             // std_manager->publishPoses(std_pub_Map, stdM_pair, msg_point->header,"map");

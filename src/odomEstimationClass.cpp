@@ -697,12 +697,12 @@ void OdomEstimationClass::addPointsToMap(const pcl::PointCloud<pcl::PointXYZ>::P
     int contj = laserCloudSurfMap->size();
     ROS_INFO("Size: Corner: %d, Surf: %d", conti,contj );
 
-    double x_min = odom.translation().x()-100;
-    double y_min = odom.translation().y()-100;
-    double z_min = odom.translation().z()-100;
-    double x_max = odom.translation().x()+100;
-    double y_max = odom.translation().y()+100;
-    double z_max = odom.translation().z()+100;
+    double x_min = odom.translation().x()-50;
+    double y_min = odom.translation().y()-50;
+    double z_min = odom.translation().z()-50;
+    double x_max = odom.translation().x()+50;
+    double y_max = odom.translation().y()+50;
+    double z_max = odom.translation().z()+50;
     
     //ROS_INFO("size : %f,%f,%f,%f,%f,%f", x_min, y_min, z_min,x_max, y_max, z_max);
     cropBoxFilter.setMin(Eigen::Vector4f(x_min, y_min, z_min, 1.0));
