@@ -23,7 +23,7 @@
     <param name="/pcl_surf" type="str" value="/laser_cloud_surf" /> -->
     <param name="/childframeID" type="str" value="sensor1/os_sensor" /> 
     <param name="cropBox_len" type="double" value="800" /> 
-    <param name="cont_opti" type="double" value="2.0" />
+    <param name="cont_opti" type="double" value="3.0" />
 
     <!-- <node pkg="dualquat_loam" type="laser_mapping" name="laser_mapping" >
     <param name="scan_period" type="double" value="0.1" /> 
@@ -46,7 +46,7 @@
 
     <!-- RViz -->
     <arg name="rviz" default="false"/>
-    <node pkg="rviz" type="rviz" name="dualquat_loam_rviz" args="-d $(find dualquat_loam)/rviz/kitti_fov.rviz" if="$(arg rviz)"/>
+    <node pkg="rviz" type="rviz" name="dualquat_loam_rviz" args="-d $(find dualquat_loam)/rviz/ntu_dataset.rviz" if="$(arg rviz)"/>
 
 </launch>
 

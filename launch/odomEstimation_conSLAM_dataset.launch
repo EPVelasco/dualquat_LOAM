@@ -6,7 +6,7 @@
 
     <!-- Hyperparameters -->
     <param name="edge_resolution" type="double" value="0.5" />
-    <param name="surf_resolution" type="double" value="1.0" />
+    <param name="surf_resolution" type="double" value="0.5" />
     <param name="velodyne_height" type="double" value="-20" />
     <param name="validation_height" type="bool" value="false" />
 
@@ -23,7 +23,7 @@
     <param name="/pcl_surf" type="str" value="/laser_cloud_surf" /> -->
     <param name="/childframeID" type="str" value="lidar_link" /> 
     <param name="cropBox_len" type="double" value="800" /> 
-    <param name="cont_opti" type="double" value="2.0" />
+    <param name="cont_opti" type="double" value="3.0" />
 
     <!-- <node pkg="dualquat_loam" type="laser_mapping" name="laser_mapping" >
     <param name="scan_period" type="double" value="0.1" /> 
@@ -37,6 +37,8 @@
 
     <node pkg="dualquat_loam" type="dq_pose_estimation_node" name="dq_pose_estimation_node" output="screen"/>
   
+     <!-- To show STD in the pose estimation -->
+    <!-- <node pkg="dualquat_loam" type="std_extractor" name="std_show" output="screen"/> -->
     <node pkg="hector_trajectory_server" type="hector_trajectory_server" name="trajectory_loDQ" ns="dualquat_odom" >
         <param name="/target_frame_name" value="odom" />
         <param name="/source_frame_name" value="lidar_link" />
@@ -46,7 +48,7 @@
 
     <!-- RViz -->
     <arg name="rviz" default="false"/>
-    <node pkg="rviz" type="rviz" name="dualquat_loam_rviz" args="-d $(find dualquat_loam)/rviz/kitti_fov.rviz" if="$(arg rviz)"/>
+    <node pkg="rviz" type="rviz" name="dualquat_loam_rviz" args="-d $(find dualquat_loam)/rviz/conSLAM.rviz" if="$(arg rviz)"/>
 
 </launch>
 

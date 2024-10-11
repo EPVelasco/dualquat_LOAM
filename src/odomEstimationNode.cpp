@@ -314,8 +314,9 @@ void odom_estimation(){
                 //            <<  -homogeneous_matrix(0,2) <<" "
                 //            <<   homogeneous_matrix(0,0) <<" "
                 //            <<   homogeneous_matrix(0,3) << std::endl;  
-
-                outputFile <<   t_current.x() <<" "
+                uint64_t time_in_nanoseconds = pointcloud_time.sec * 1000000ULL + pointcloud_time.nsec/1000.0;
+                outputFile <<  time_in_nanoseconds <<" "
+                           <<   t_current.x() <<" "
                            <<   t_current.y() <<" "
                            <<   t_current.z() <<" "
                            <<   q_current.w() <<" "
