@@ -49,7 +49,6 @@ void velodyneHandler(const sensor_msgs::PointCloud2ConstPtr &laserCloudMsg)
 }
 
 
-
 void laser_mapping(){
     while(1){
         if(!odometryBuf.empty() && !pointCloudBuf.empty()){
@@ -82,7 +81,6 @@ void laser_mapping(){
             odometryBuf.pop();
             mutex_lock.unlock();
             
-
             laserMapping.updateCurrentPointsToMap(pointcloud_in,current_pose);
 
             pcl::PointCloud<pcl::PointXYZI>::Ptr pc_map = laserMapping.getMap();
@@ -92,8 +90,6 @@ void laser_mapping(){
             PointsMsg.header.frame_id = "map";
             map_pub.publish(PointsMsg); 
             
-
-
         }
         //sleep 2 ms every time
         std::chrono::milliseconds dura(2);
@@ -116,8 +112,6 @@ int main(int argc, char **argv)
     nh.getParam("/min_dis", min_dis);
     nh.getParam("/map_resolution", map_resolution);
     
-
-
     laserMapping.init(map_resolution);
     ros::Subscriber subLaserCloud = nh.subscribe<sensor_msgs::PointCloud2>("/ouster/points", 100, velodyneHandler);
     ros::Subscriber subOdometry = nh.subscribe<nav_msgs::Odometry>("/odom_dq", 100, odomCallback);

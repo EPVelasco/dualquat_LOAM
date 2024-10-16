@@ -20,9 +20,12 @@
     <param name="cropBox_len" type="double" value="800" />
     <param name="cont_opti" type="double" value="1.0" />
 
-    <param name="cont_for_map" type="double" value="1.0" /> 
-    <param name="save_data" type="bool" value="true" />
-    <param name="/path_odom" type="str" value="/home/ws/src/resultados_dualquat_loam/heliPR/rotonda_2.txt" />
+    <param name="cont_for_map" type="double" value="1.0" />  
+    
+    <!-- +++++++++++++++deprecated function ++++++++++++++++-->
+    <!-- <param name="save_data" type="bool" value="true" />    
+    <param name="/path_odom"                 type="str" value="/home/ws/src/resultados_dualquat_loam/data.txt" />  -->
+    <!-- +++++++++++++++++++++++++++++++++++++++++++++++++++-->
 
     <!-- Transform publisher -->
     <node pkg="tf" type="static_transform_publisher" name="word2odom_tf"  args="0 0 0 0 0 0 /map /odom 10" />

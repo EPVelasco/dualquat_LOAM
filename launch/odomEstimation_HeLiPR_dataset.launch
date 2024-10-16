@@ -30,8 +30,10 @@
     </node>  -->
     <param name="cont_for_map" type="double" value="1.0" /> 
 
-    <param name="save_data" type="bool" value="true" />    
-    <param name="/path_odom"                 type="str" value="/home/ws/src/resultados_dualquat_loam/heliPR/bridge_02.txt" /> 
+    <!-- +++++++++++++++deprecated function ++++++++++++++++-->
+    <!-- <param name="save_data" type="bool" value="true" />    
+    <param name="/path_odom"                 type="str" value="/home/ws/src/resultados_dualquat_loam/data.txt" />  -->
+    <!-- +++++++++++++++++++++++++++++++++++++++++++++++++++-->
 
     <node pkg="tf" type="static_transform_publisher" name="word2odom_tf"  args="0 0 0 0 0 0 /map /odom 10" />
 
