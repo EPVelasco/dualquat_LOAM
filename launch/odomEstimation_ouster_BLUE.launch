@@ -7,7 +7,7 @@
 
     <!-- Hyperparameters -->
     <param name="edge_resolution" type="double" value="0.5" />
-    <param name="surf_resolution" type="double" value="1.0" />
+    <param name="surf_resolution" type="double" value="0.8" />
     <param name="velodyne_height" type="double" value="-20" />
     <param name="validation_height" type="bool" value="false" />
 
