@@ -13,8 +13,8 @@
 
 using namespace DQ_robotics;
 
-std::string path_estadistic = "/home/ws/src/parque_cientifico/estadisticas.txt";
-std::ofstream org_outputFile(path_estadistic);   
+//std::string path_estadistic = "/home/ws/src/parque_cientifico/estadisticas.txt";
+//std::ofstream org_outputFile(path_estadistic);   
 
 struct EdgeCostFunction {
     EdgeCostFunction(const Eigen::Matrix<double,8,1>& LocalTransformacion, const Eigen::Matrix<double,8,1>& line, const double& factor_line)
@@ -272,7 +272,7 @@ void OdomEstimationClass::initMapWithPoints(const pcl::PointCloud<pcl::PointXYZ>
     //optimization_count=4;
     optimization_count=12;
     std::cout<<"mapa inicializado: "<<std::endl;
-    org_outputFile << "Estadisticas con "<<optimization_count<<" lazos FOR al iniciar"<<std::endl;
+    //org_outputFile << "Estadisticas con "<<optimization_count<<" lazos FOR al iniciar"<<std::endl;
 
   
 }
@@ -346,20 +346,20 @@ void OdomEstimationClass::updatePointsToMap(const pcl::PointCloud<pcl::PointXYZ>
             options.linear_solver_type = ceres::DENSE_QR;
             options.max_num_iterations = 100; // 100 para Kitti
             options.gradient_check_relative_precision = 1e-4;  
-            options.minimizer_progress_to_stdout = true;
+            options.minimizer_progress_to_stdout = false;
             options.check_gradients = false;
             options.num_threads = 10;
 
 
-            // Redirige la salida estándar al archivo
-            std::streambuf *coutbuf = std::cout.rdbuf(); // Guarda el buffer de la salida estándar
-            std::cout.rdbuf(org_outputFile.rdbuf()); // Redirige la salida estándar al archivo
+            // // Redirige la salida estándar al archivo
+            // std::streambuf *coutbuf = std::cout.rdbuf(); // Guarda el buffer de la salida estándar
+            // std::cout.rdbuf(org_outputFile.rdbuf()); // Redirige la salida estándar al archivo
 
             ceres::Solver::Summary summary;
             ceres::Solve(options, &problem, &summary);
 
-            // Restaura la salida estándar
-            std::cout.rdbuf(coutbuf);
+            // // Restaura la salida estándar
+            // std::cout.rdbuf(coutbuf);
 
             // std::cout << summary.BriefReport() << std::endl;
             // std::cout << summary.FullReport();
@@ -367,16 +367,16 @@ void OdomEstimationClass::updatePointsToMap(const pcl::PointCloud<pcl::PointXYZ>
             
             // printf("*********************************************************:\n");
 
-            std::cout << "Iteraciones exitosas: " << summary.num_successful_steps << std::endl;
-            org_outputFile << "Iteraciones exitosas: " << summary.num_successful_steps << std::endl;
-            org_outputFile << summary.BriefReport() << std::endl;
-            org_outputFile << summary.FullReport() << std::endl;
-            org_outputFile << "*********************************************************" << std::endl;
+            // std::cout << "Iteraciones exitosas: " << summary.num_successful_steps << std::endl;
+            // org_outputFile << "Iteraciones exitosas: " << summary.num_successful_steps << std::endl;
+            // org_outputFile << summary.BriefReport() << std::endl;
+            // org_outputFile << summary.FullReport() << std::endl;
+            // org_outputFile << "*********************************************************" << std::endl;
 
         }
-        Eigen::Matrix<double, 8, 1> dq_data = Eigen::Map<Eigen::Matrix<double, 8, 1>>(parameters);
-        org_outputFile<<"Resuelto: "<<dq_data.transpose()<<std::endl;
-        org_outputFile<< "______________________________________________________________________" << std::endl;
+        // Eigen::Matrix<double, 8, 1> dq_data = Eigen::Map<Eigen::Matrix<double, 8, 1>>(parameters);
+        // org_outputFile<<"Resuelto: "<<dq_data.transpose()<<std::endl;
+        // org_outputFile<< "______________________________________________________________________" << std::endl;
         
     }else{
         printf("not enough points in map to associate, map error\n");
@@ -531,8 +531,8 @@ void OdomEstimationClass::addEdgeDQCostFactor(const pcl::PointCloud<pcl::PointXY
         if (corner_num == cropBox_len)
             break;
      }
-    org_outputFile << "OK Edges: " << corner_num<<std::endl;
-    org_outputFile << "No Edges: " << no_corner<<std::endl;
+  //  org_outputFile << "OK Edges: " << corner_num<<std::endl;
+  //  org_outputFile << "No Edges: " << no_corner<<std::endl;
    // std::cout<<"Linea: "<<corner_num<<", No linea:"<<no_corner<<std::endl;
     if(corner_num<min_edges){
         std::cout<<"At least "<< min_edges <<" points are required for edge matching."<<std::endl;
@@ -628,8 +628,8 @@ void OdomEstimationClass::addSurfDQCostFactor(const pcl::PointCloud<pcl::PointXY
                 break;           
         }
 
-    org_outputFile << "OK Surf: " << surf_num<<std::endl;
-    org_outputFile << "No Surf: " << no_plane<<std::endl;
+   // org_outputFile << "OK Surf: " << surf_num<<std::endl;
+   // org_outputFile << "No Surf: " << no_plane<<std::endl;
 
     if(surf_num<20){
         printf("not enough correct points to plane");
@@ -666,7 +666,7 @@ void OdomEstimationClass::addSTDCostFactor(std::vector<STDesc> stdC_pair, std::v
         ceres::CostFunction *cost_function = new ceres::AutoDiffCostFunction<STDCostFunction, 1, 8>(new STDCostFunction(stdC_dq, stdM_dq));
         problem.AddResidualBlock(cost_function, loss_function, parameters); 
     } 
-    org_outputFile << "OK stds: " << stdC_pair.size()<<std::endl;
+   // org_outputFile << "OK stds: " << stdC_pair.size()<<std::endl;
 
 }
 

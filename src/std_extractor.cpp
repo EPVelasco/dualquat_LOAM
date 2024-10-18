@@ -42,6 +42,8 @@ typedef pcl::PointCloud<PointType> PointCloud;
 std::mutex laser_mtx;
 std::mutex odom_mtx;
 
+std::string pcTopic   = "/velodyne_points";
+
 bool init_std = true;
 
 std::queue<sensor_msgs::PointCloud2::ConstPtr> laser_buffer;
@@ -567,6 +569,10 @@ int main(int argc, char **argv) {
     ConfigSetting config_setting;
     read_parameters(nh, config_setting);
 
+    nh.getParam("/pcTopic",pcTopic);        
+
+
+
     ros::Publisher pubkeycurr = nh.advertise<visualization_msgs::MarkerArray>("std_curr", 10);
     ros::Publisher pubkeyprev = nh.advertise<visualization_msgs::MarkerArray>("std_prev", 10);    
     ros::Publisher pubkeymap = nh.advertise<visualization_msgs::MarkerArray>("std_map", 10); 
@@ -582,7 +588,7 @@ int main(int argc, char **argv) {
     ros::Publisher pose_pub_prev = nh.advertise<geometry_msgs::PoseArray>("std_prev_poses", 10);
     ros::Publisher pose_pub_curr = nh.advertise<geometry_msgs::PoseArray>("std_curr_poses", 10);
 
-    ros::Subscriber subLaserCloud = nh.subscribe<sensor_msgs::PointCloud2>("/velodyne_points", 100, laserCloudHandler);
+    ros::Subscriber subLaserCloud = nh.subscribe<sensor_msgs::PointCloud2>(pcTopic, 100, laserCloudHandler);
     ros::Subscriber subOdom = nh.subscribe<nav_msgs::Odometry>("/odom_dq", 100, OdomHandler);
     ros::Publisher cloud_pub = nh.advertise<sensor_msgs::PointCloud2>("output_cloud_std_ex", 1);
     ros::Publisher cloud_pub_prev = nh.advertise<sensor_msgs::PointCloud2>("output_cloud_prev", 1);
