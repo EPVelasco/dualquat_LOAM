@@ -42,10 +42,10 @@ RUN cd /home/epvs && mkdir library
 RUN apt-get update && apt-get install cmake libgoogle-glog-dev libgflags-dev libatlas-base-dev libeigen3-dev libsuitesparse-dev -y
 
 #Command line to download the library automatically from the ceres page.
-#RUN cd /home/epvs/library && git clone https://ceres-solver.googlesource.com/ceres-solver && cd ceres-solver && mkdir ceres-bin && cd ceres-bin
+RUN cd /home/epvs/library && git clone https://ceres-solver.googlesource.com/ceres-solver && cd ceres-solver && mkdir ceres-bin && cd ceres-bin
 
 #Command line to copy the library inside the container for ceres installation (manual download of ceres is required).
-COPY ./ceres-solver-2.2.0.tar.gz /home/epvs/library
+#COPY ./ceres-solver-2.2.0.tar.gz /home/epvs/library
 
 RUN cd /home/epvs/library && tar zxf ceres-solver-2.2.0.tar.gz && cd ceres-solver-2.2.0 && mkdir ceres-bin
 RUN cd /home/epvs/library/ceres-solver-2.2.0/ceres-bin/  && cmake .. && make -j10 && make install
